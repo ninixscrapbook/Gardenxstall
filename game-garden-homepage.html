@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Garden</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --green-deep:#7FA83E;
+    --green-light:#C7DE6E;
+    --pink:#F2897E;
+    --pink-pale:#FBD9CE;
+    --cream:#F7DFA0;
+    --lavender:#C6AEE0;
+    --paper:#FFFDF6;
+    --ink:#5B4A32;
+    --ink-soft:#8A7A5C;
+    --white:#ffffff;
+    --shadow: 0 10px 0 rgba(91,74,50,0.10);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 1px 1px, rgba(165,200,88,0.18) 1px, transparent 0) 0 0/26px 26px,
+      var(--paper);
+    font-family:'Nunito', sans-serif;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  img,svg{image-rendering:pixelated;}
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:22px 6vw 0;
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    font-family:'Press Start 2P', monospace;
+    font-size:13px;
+    color:var(--ink);
+  }
+  .brand-dot{
+    width:14px;height:14px;background:var(--pink);
+    border:2px solid var(--ink);
+    box-shadow:3px 3px 0 rgba(91,74,50,0.25);
+  }
+  .badge-count{
+    font-family:'Press Start 2P', monospace;
+    font-size:10px;
+    background:var(--white);
+    border:2px solid var(--ink);
+    border-radius:999px;
+    padding:8px 14px;
+    box-shadow:2px 2px 0 rgba(91,74,50,0.18);
+  }
+  .sound-btn{
+    font-size:16px;
+    background:var(--white);
+    border:2px solid var(--ink);
+    border-radius:10px;
+    width:38px; height:38px;
+    cursor:pointer;
+    box-shadow:2px 2px 0 rgba(91,74,50,0.2);
+    transition:transform .1s ease;
+  }
+  .sound-btn:hover{ transform:translateY(-2px); }
+  .sound-btn.muted{ opacity:.55; }
+
+  /* ---------- hero ---------- */
+  .hero{
+    padding:38px 6vw 18px;
+    text-align:center;
+    position:relative;
+  }
+  .hero h1{
+    font-family:'Fredoka', sans-serif;
+    font-weight:700;
+    font-size:clamp(38px, 7vw, 64px);
+    margin:0;
+    color:var(--ink);
+    letter-spacing:0.5px;
+  }
+  .hero h1 span{
+    color:var(--pink);
+    -webkit-text-stroke: 1.5px var(--ink);
+    text-shadow: 3px 3px 0 var(--green-light);
+  }
+  .hero p{
+    font-size:16px;
+    color:var(--ink-soft);
+    max-width:520px;
+    margin:12px auto 0;
+    line-height:1.5;
+  }
+  .hero-tag{
+    display:inline-block;
+    font-family:'Press Start 2P', monospace;
+    font-size:9px;
+    background:var(--green-light);
+    border:2px solid var(--ink);
+    padding:6px 12px;
+    border-radius:8px;
+    margin-bottom:14px;
+    box-shadow:3px 3px 0 rgba(91,74,50,0.2);
+  }
+
+  /* ---------- path banner ---------- */
+  .path-strip{
+    height:34px;
+    margin:26px 6vw 0;
+    border-radius:17px;
+    background: repeating-linear-gradient(90deg, var(--green-deep) 0 26px, var(--green-light) 26px 52px);
+    border:3px solid var(--ink);
+    position:relative;
+    overflow:hidden;
+  }
+  .path-strip::after{
+    content:"";
+    position:absolute; inset:0;
+    background: repeating-linear-gradient(90deg, transparent 0 34px, rgba(255,255,255,0.35) 34px 40px);
+  }
+
+  /* ---------- grid ---------- */
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));
+    gap:26px;
+    padding:34px 6vw 70px;
+    max-width:1280px;
+    margin:0 auto;
+  }
+
+  .card{
+    position:relative;
+    background:var(--white);
+    border:3px solid var(--ink);
+    border-radius:20px;
+    box-shadow:var(--shadow);
+    padding-top:0;
+    overflow:hidden;
+    text-decoration:none;
+    color:var(--ink);
+    display:flex;
+    flex-direction:column;
+    transition:transform .18s ease, box-shadow .18s ease;
+    cursor:pointer;
+  }
+  .card:hover{
+    transform:translateY(-6px);
+    box-shadow: 0 16px 0 rgba(91,74,50,0.14);
+  }
+  .card:hover .play-pop{ opacity:1; transform:translate(-50%,-50%) scale(1); }
+  .card:hover .char.c2{ animation-delay:.15s; }
+
+  /* per-stall signature animations */
+  .card.s1:hover .char{ animation: bounce .6s ease infinite; }
+  .card.s2:hover .char{ animation: wiggle .5s ease-in-out infinite; }
+  .card.s3:hover .char{ animation: slither .7s ease-in-out infinite; }
+  .card.s4:hover .char{ animation: squash .55s ease-in-out infinite; }
+  .card.s5:hover .char{ animation: popUp .45s ease-in-out infinite; }
+  .card.s6:hover .char{ animation: tapTap .35s linear infinite; }
+  .card.s7:hover .char{ animation: thinkTilt .8s ease-in-out infinite; }
+  .card.s8:hover .char{ animation: shake .4s ease-in-out infinite; }
+  .card.s9:hover .char{ animation: spinHop .7s ease-in-out infinite; }
+
+  .awning{
+    height:34px;
+    background: repeating-linear-gradient(90deg, var(--awning-a, var(--pink)) 0 18px, var(--awning-b, var(--pink-pale)) 18px 36px);
+    border-bottom:3px solid var(--ink);
+    position:relative;
+  }
+  .awning::after{
+    content:"";
+    position:absolute; left:0; right:0; bottom:-9px; height:9px;
+    background: inherit;
+    clip-path: polygon(0 0,100% 0,100% 40%,92% 100%,84% 40%,76% 100%,68% 40%,60% 100%,52% 40%,44% 100%,36% 40%,28% 100%,20% 40%,12% 100%,4% 40%,0 100%);
+  }
+
+  .stage{
+    position:relative;
+    height:140px;
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+    gap:14px;
+    background: var(--stage-bg, var(--cream));
+    padding-bottom:8px;
+  }
+  .stage::before{
+    content:"";
+    position:absolute; left:0; right:0; bottom:0; height:26%;
+    background: rgba(165,200,88,0.35);
+    border-top:2px dashed rgba(91,74,50,0.25);
+  }
+
+  .vs{
+    font-family:'Press Start 2P', monospace;
+    font-size:10px;
+    color:var(--ink);
+    background:var(--white);
+    border:2px solid var(--ink);
+    border-radius:50%;
+    width:26px; height:26px;
+    display:flex; align-items:center; justify-content:center;
+    position:relative; z-index:2;
+    margin-bottom:16px;
+  }
+
+  .info{
+    padding:14px 16px 18px;
+    text-align:center;
+  }
+  .info .eyebrow{
+    font-family:'Press Start 2P', monospace;
+    font-size:8px;
+    color:var(--ink-soft);
+    letter-spacing:1px;
+    margin-bottom:6px;
+  }
+  .info h3{
+    font-family:'Fredoka', sans-serif;
+    font-size:20px;
+    margin:0 0 6px;
+  }
+  .info p{
+    font-size:13px;
+    color:var(--ink-soft);
+    margin:0;
+    line-height:1.4;
+  }
+
+  .play-pop{
+    position:absolute; top:44%; left:50%;
+    transform:translate(-50%,-50%) scale(.7);
+    opacity:0;
+    transition:opacity .18s ease, transform .18s ease;
+    font-family:'Press Start 2P', monospace;
+    font-size:11px;
+    background:var(--green-deep);
+    color:var(--paper);
+    border:2px solid var(--ink);
+    padding:8px 14px;
+    border-radius:8px;
+    box-shadow:3px 3px 0 rgba(91,74,50,0.3);
+    z-index:3;
+    pointer-events:none;
+  }
+
+  @keyframes bounce{
+    0%,100%{ transform:translateY(0); }
+    50%{ transform:translateY(-6px); }
+  }
+  @keyframes wiggle{
+    0%,100%{ transform:rotate(0deg); }
+    25%{ transform:rotate(-8deg); }
+    75%{ transform:rotate(8deg); }
+  }
+  @keyframes slither{
+    0%,100%{ transform:translateX(0) rotate(0deg); }
+    25%{ transform:translateX(-4px) rotate(-4deg); }
+    75%{ transform:translateX(4px) rotate(4deg); }
+  }
+  @keyframes squash{
+    0%,100%{ transform:scale(1,1); }
+    50%{ transform:scale(1.12,0.86) translateY(3px); }
+  }
+  @keyframes popUp{
+    0%,60%,100%{ transform:translateY(0); }
+    30%{ transform:translateY(-14px); }
+  }
+  @keyframes tapTap{
+    0%,100%{ transform:translateY(0) rotate(0deg); }
+    50%{ transform:translateY(-3px) rotate(-3deg); }
+  }
+  @keyframes thinkTilt{
+    0%,100%{ transform:rotate(0deg) translateY(0); }
+    50%{ transform:rotate(6deg) translateY(-3px); }
+  }
+  @keyframes shake{
+    0%,100%{ transform:translateX(0); }
+    20%{ transform:translateX(-5px) rotate(-3deg); }
+    40%{ transform:translateX(5px) rotate(3deg); }
+    60%{ transform:translateX(-4px) rotate(-2deg); }
+    80%{ transform:translateX(4px) rotate(2deg); }
+  }
+  @keyframes spinHop{
+    0%,100%{ transform:translateY(0) rotate(0deg); }
+    50%{ transform:translateY(-8px) rotate(180deg); }
+  }
+
+  /* ---------- pixel characters ---------- */
+  .char{
+    width:56px; height:64px;
+    position:relative;
+    filter:drop-shadow(2px 3px 0 rgba(91,74,50,0.25));
+  }
+  .char .head{
+    position:absolute; left:50%; top:14px; transform:translateX(-50%);
+    width:44px; height:40px;
+    background:var(--fur, #E8C79A);
+    border:2.5px solid var(--ink);
+    border-radius:14px;
+  }
+  .char .ear{
+    position:absolute; top:2px;
+    width:16px; height:20px;
+    background:var(--fur, #E8C79A);
+    border:2.5px solid var(--ink);
+  }
+  .char .ear.l{ left:2px; border-radius:60% 40% 0 40%; }
+  .char .ear.r{ right:2px; border-radius:40% 60% 40% 0; }
+  .char .ear.inner{ box-shadow: inset 0 0 0 20px var(--fur-in, #F6E3C6); border:none; }
+  .char .eye{
+    position:absolute; top:32px; width:5px; height:6px; background:var(--ink); border-radius:1px;
+  }
+  .char .eye.l{ left:16px; } .char .eye.r{ right:16px; }
+  .char .blush{
+    position:absolute; top:40px; width:7px; height:4px; background:var(--pink); border-radius:50%; opacity:.8;
+  }
+  .char .blush.l{ left:10px; } .char .blush.r{ right:10px; }
+  .char .muzzle{
+    position:absolute; left:50%; top:38px; transform:translateX(-50%);
+    width:14px; height:9px; background:var(--fur-in,#F6E3C6); border-radius:0 0 8px 8px;
+    border:2px solid var(--ink); border-top:none;
+  }
+  .char .body{
+    position:absolute; left:50%; bottom:0; transform:translateX(-50%);
+    width:34px; height:20px;
+    background:var(--tunic, var(--pink));
+    border:2.5px solid var(--ink);
+    border-radius:10px 10px 4px 4px;
+  }
+
+  /* fox */
+  .fox{ --fur:#F0A560; --fur-in:#FBD9CE; }
+  .fox .ear{ border-radius:70% 30% 0 30%; }
+  /* bunny */
+  .bunny{ --fur:#F7D8D3; --fur-in:#FBD9CE; }
+  .bunny .ear{ height:30px; top:-8px; width:12px; border-radius:60%; }
+  /* cat */
+  .cat{ --fur:#F7EFD2; --fur-in:#F7DFA0; }
+  .cat .ear{ clip-path: polygon(0 100%, 50% 0, 100% 100%); border-radius:0; }
+  /* bear */
+  .bear{ --fur:#C9A27A; --fur-in:#F6E3C6; }
+  .bear .ear{ border-radius:50%; width:16px; height:16px; }
+  /* deer */
+  .deer{ --fur:#E3C79E; --fur-in:#F7DFA0; }
+  .deer .ear{ width:10px; height:26px; top:-10px; border-radius:50% 50% 0 50%; }
+  /* chick */
+  .chick{ --fur:#EFE28C; --fur-in:#F7DFA0; }
+  .chick .ear{ display:none; }
+
+  .tunic-green{ --tunic: var(--green-light); }
+  .tunic-pink{ --tunic: var(--pink); }
+  .tunic-cream{ --tunic: var(--cream); }
+  .tunic-deepgreen{ --tunic: var(--green-deep); }
+
+  footer{
+    text-align:center;
+    padding:0 6vw 50px;
+    font-family:'Press Start 2P', monospace;
+    font-size:9px;
+    color:var(--ink-soft);
+  }
+
+  @media (max-width:520px){
+    .grid{ grid-template-columns:1fr 1fr; gap:16px; padding:26px 5vw 50px; }
+    .char{ width:44px; height:52px; transform:scale(.85); }
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="brand"><span class="brand-dot"></span> GAME GARDEN</div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div class="badge-count">9 GAMES</div>
+      <button class="sound-btn muted" id="soundBtn" title="Toggle music">🔈</button>
+    </div>
+  </div>
+
+  <div class="hero">
+    <span class="hero-tag">★ PICK A PLOT, PLAY A ROUND ★</span>
+    <h1>Welcome to the <span>Game</span> Garden</h1>
+    <p>Nine cozy mini-games tended by the garden crew. Hover a stall to meet the two characters facing off — then step in and play against the computer.</p>
+  </div>
+
+  <div class="path-strip" aria-hidden="true"></div>
+
+  <div class="grid">
+
+    <!-- 1 Tic Tac Toe -->
+    <a class="card s1" href="tic-tac-toe.html" style="--awning-a:var(--pink); --awning-b:var(--pink-pale); --stage-bg:var(--pink-pale);">
+      <div class="awning"></div>
+      <div class="stage">
+        <div class="char fox c1"><div class="ear l"></div><div class="ear r"></div><div class="head"></div><div class="eye l"></div><div class="eye r"></div><div class="muzzle"></div><div class="blush l"></div><div class="blush r"></div><div class="body tunic-cream"></div></div>
+        <div class="vs">VS</div>
+        <div class="char bunny c2"><div class="ear l"></div><div class="ear r"></div><div class="head"></div><div class="eye l"></div><div class="eye r"></div><div class="muzzle"></div><div class="blush l"></div><div class="blush r"></div><div class="body tunic-green"></div></div>
+      </div>
+      <div class="info">
+        <div class="eyebrow">STALL 01</div>
+        <h3>Tic-Tac-Toe</h3>
+        <p>Fox vs. Bunny — three in a row wins the patch.</p>
+      </div>
+      <div class="play-pop">PLAY ►</div>
+    </a>
+
+    <!-- 2 Memory Match -->
+    <a class="card s2" href="memory-match.html" style="--awning-a:var(--lavender); --awning-b:var(--cream); --stage-bg:var(--cream);">
+      <div class="awning"></div>
+      <div class="stage">
+        <div class="char cat c1"><div class="ear l"></div><div class="ear r"></div><div class="head"></div><div class="eye l"></div><div class="eye r"></div><div class="muzzle"></div><div class="blush l"></div><div class="blush r"></div><div class="body tunic-pink"></div></div>
+        <div class="vs">VS</div>
+        <div class="char deer c2"><div class="ear l"></div><div class="ear r"></div><div class="head"></div><div class="eye l"></div><div class="eye r"></div><div class="muzzle"></div><div class="blush l"></div><div class="blush r"></div><div class="body tunic-deepgreen"></div></div>
+      </div>
+      <div class="info">
+        <div class="eyebrow">STALL 02</div>
+        <h3>Memory Match</h3>
+        <p>Cat vs. Deer — flip petals, find the pairs first.</p>
+      </div>
+      <div class="play-pop">PLAY ►</div>
+    </a>
+
+    <!-- 3 Snake -->
+    <a class="card s3" href="snake.html" style="--awning-a:var(--green-deep); --awning-b:var(--green-light); --stage-bg:var(--green-light);">
+      <div class="awning"></div>
+      <div class="stage">
+        <div class="char bunny c1"><div class="ear l"></div><div class="ear r"></div><div class="head"></div><div class="eye l"></div><div class="eye r"></div><div class="muzzle"></div><div class="blush l"></div><div class="blush r"></div><div class="body tunic-pink"></div></div>
+        <div class="vs">VS</div>
+        <div class="char bear c2"><div class="ear l"></div><div class="ear r"></div><div class="head"></div><div class="eye l"></div><div class="eye r"></div><div class="muzzle"></div><div class="blush l"></div><div class="blush r"></div><div class="body tunic-cream"></div></div>
+      </div>
+      <div class="info">
+        <div class="eyebrow">STALL 03</div>
+        <h3>Snake</h3>
+        <p>Bunny vs. Bear — grow longest through the hedges.</p>
+      </div>
+      <div class="play-pop">PLAY ►</div>
+    </a>
+
+    <!-- 4 2048 -->
+    <a class="card s4" href="game-2048.html" style="--awning-a:var(--pink); --awning-b:var(--cream); --stage-bg:var(--cream);">
+      <div class="awning"></div>
+      <div class="stage">
+        <div class="char bear c1"><div class="ear l"></div><div class="ear r"></div><div class="head"></div><div class="eye l"></div><div class="eye r"></div><div class="muzzle"></div><div class="blush l"></div><div class="blush r"></div><div class="body tunic-green"></div></div>
+        <div class="vs">VS</div>
+        <div class="char chick c2"><div class="head"></div><div class="eye l"></div><div class="eye r"></div><div class="muzzle"></div><div class="blush l"></div><div class="blush r"></div><div class="body tunic-pink"></div></div>
+      </div>
+      <div class="info">
+        <div class="eyebrow">STALL 04</div>
+        <h3>2048</h3>
+        <p>Bear vs. Chick — merge crates up to the golden tile.</p>
+      </div>
+      <div class="play-pop">PLAY ►</div>
+    </a>
+
+    <!-- 5 Whack-a-Mole -->
+    <a class="card s5" href="whackamole.html" style="--awning-a:var(--lavender); --awning-b:var(--pink-pale); --stage-bg:var(--lavender);">
+      <div class="awning"></div>
+      <div class="stage">
+        <div class="char fox c1"><div class="ear l"></div><div class="ear r"></div><div class="head"></div><div class="eye l"></div><div class="eye r"></div><div class="muzzle"></div><div class="blush l"></div><div class="blush r"></div><div class="body tunic-deepgreen"></div></div>
+        <div class="vs">VS</div>
+        <div class="char chick c2"><div class="head"></div><div class="eye l"></div><div class="eye r"></div><div class="muzzle"></div><div class="blush l"></div><div class="blush r"></div><div class="body tunic-cream"></div></div>
+      </div>
+      <div class="info">
+        <div class="eyebrow">STALL 05</div>
+        <h3>Whack-a-Mole</h3>
+        <p>Fox vs. Chick — quickest paws win the round.</p>
+      </div>
+      <div class="play-pop">PLAY ►</div>
+    </a>
+
+    <!-- 6 Typing Speed -->
+    <a class="card s6" href="rock-paper-scissors.html" style="--awning-a:var(--cream); --awning-b:var(--green-light); --stage-bg:var(--green-light);">
+      <div class="awning"></div>
+      <div class="stage">
+        <div class="char deer c1"><div class="ear l"></div><div class="ear r"></div><div class="head"></div><div class="eye l"></div><div class="eye r"></div><div class="muzzle"></div><div class="blush l"></div><div class="blush r"></div><div class="body tunic-pink"></div></div>
+        <div class="vs">VS</div>
+        <div class="char cat c2"><div class="ear l"></div><div class="ear r"></div><div class="head"></div><div class="eye l"></div><div class="eye r"></div><div class="muzzle"></div><div class="blush l"></div><div class="blush r"></div><div class="body tunic-green"></div></div>
+      </div>
+      <div class="info">
+        <div class="eyebrow">STALL 06</div>
+        <h3>Typing Speed</h3>
+        <p>Deer vs. Cat — race the prompt, fastest WPM wins.</p>
+      </div>
+      <div class="play-pop">PLAY ►</div>
+    </a>
+
+    <!-- 7 Quiz/Trivia -->
+    <a class="card s7" href="quiz-trivia.html" style="--awning-a:var(--pink); --awning-b:var(--green-light); --stage-bg:var(--cream);">
+      <div class="awning"></div>
+      <div class="stage">
+        <div class="char bear c1"><div class="ear l"></div><div class="ear r"></div><div class="head"></div><div class="eye l"></div><div class="eye r"></div><div class="muzzle"></div><div class="blush l"></div><div class="blush r"></div><div class="body tunic-pink"></div></div>
+        <div class="vs">VS</div>
+        <div class="char bunny c2"><div class="ear l"></div><div class="ear r"></div><div class="head"></div><div class="eye l"></div><div class="eye r"></div><div class="muzzle"></div><div class="blush l"></div><div class="blush r"></div><div class="body tunic-deepgreen"></div></div>
+      </div>
+      <div class="info">
+        <div class="eyebrow">STALL 07</div>
+        <h3>Quiz Trivia</h3>
+        <p>Bear vs. Bunny — most correct answers takes the trophy.</p>
+      </div>
+      <div class="play-pop">PLAY ►</div>
+    </a>
+
+    <!-- 8 Rock Paper Scissors -->
+    <a class="card s8" href="rock-paper-scissors.html" style="--awning-a:var(--green-deep); --awning-b:var(--pink-pale); --stage-bg:var(--pink-pale);">
+      <div class="awning"></div>
+      <div class="stage">
+        <div class="char chick c1"><div class="head"></div><div class="eye l"></div><div class="eye r"></div><div class="muzzle"></div><div class="blush l"></div><div class="blush r"></div><div class="body tunic-green"></div></div>
+        <div class="vs">VS</div>
+        <div class="char fox c2"><div class="ear l"></div><div class="ear r"></div><div class="head"></div><div class="eye l"></div><div class="eye r"></div><div class="muzzle"></div><div class="blush l"></div><div class="blush r"></div><div class="body tunic-pink"></div></div>
+      </div>
+      <div class="info">
+        <div class="eyebrow">STALL 08</div>
+        <h3>Rock Paper Scissors</h3>
+        <p>Chick vs. Fox — best of three, no peeking.</p>
+      </div>
+      <div class="play-pop">PLAY ►</div>
+    </a>
+
+    <!-- 9 Guess the Number -->
+    <a class="card s9" href="guess-the-number.html" style="--awning-a:var(--cream); --awning-b:var(--lavender); --stage-bg:var(--cream);">
+      <div class="awning"></div>
+      <div class="stage">
+        <div class="char deer c1"><div class="ear l"></div><div class="ear r"></div><div class="head"></div><div class="eye l"></div><div class="eye r"></div><div class="muzzle"></div><div class="blush l"></div><div class="blush r"></div><div class="body tunic-cream"></div></div>
+        <div class="vs">VS</div>
+        <div class="char bear c2"><div class="ear l"></div><div class="ear r"></div><div class="head"></div><div class="eye l"></div><div class="eye r"></div><div class="muzzle"></div><div class="blush l"></div><div class="blush r"></div><div class="body tunic-pink"></div></div>
+      </div>
+      <div class="info">
+        <div class="eyebrow">STALL 09</div>
+        <h3>Guess the Number</h3>
+        <p>Deer vs. Bear — fewest guesses finds the hidden acorn count.</p>
+      </div>
+      <div class="play-pop">PLAY ►</div>
+    </a>
+
+  </div>
+
+  <footer>MADE WITH ♥ IN THE GARDEN</footer>
+
+<script>
+  /* ---------- sweet lofi garden music engine (no external files) ---------- */
+  let audioCtx = null;
+  let musicOn = false;
+  let musicTimer = null;
+  let chordIndex = 0;
+  let lofiFilter = null;
+  let crackleSource = null;
+
+  // gentle major-key progression, kawaii/garden feel: C - Am - F - G (with 7ths for warmth)
+  const CHORDS = [
+    [261.63, 329.63, 392.00, 493.88],  // Cmaj7
+    [220.00, 261.63, 329.63, 392.00],  // Am7
+    [174.61, 220.00, 261.63, 349.23],  // Fmaj7
+    [196.00, 246.94, 293.66, 392.00],  // G(add9)
+  ];
+  const BASS = [130.81, 110.00, 87.31, 98.00];
+
+  function ensureAudio(){
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  }
+
+  function playChordNote(freq, startDelay, duration, gainVal){
+    if (!audioCtx || !lofiFilter) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    const t0 = audioCtx.currentTime + startDelay;
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.linearRampToValueAtTime(gainVal, t0 + 0.5);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+    osc.connect(gain); gain.connect(lofiFilter);
+    osc.start(t0); osc.stop(t0 + duration + 0.05);
+  }
+
+  function playBell(freq, startDelay, gainVal){
+    if (!audioCtx || !lofiFilter) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.value = freq;
+    const t0 = audioCtx.currentTime + startDelay;
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.linearRampToValueAtTime(gainVal, t0 + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.9);
+    osc.connect(gain); gain.connect(lofiFilter);
+    osc.start(t0); osc.stop(t0 + 1);
+  }
+
+  function playSoftHat(startDelay){
+    if (!audioCtx) return;
+    const bufferSize = audioCtx.sampleRate * 0.05;
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+    const noise = audioCtx.createBufferSource();
+    noise.buffer = buffer;
+    const hp = audioCtx.createBiquadFilter();
+    hp.type = 'highpass'; hp.frequency.value = 6500;
+    const g = audioCtx.createGain();
+    g.gain.value = 0.02;
+    noise.connect(hp); hp.connect(g); g.connect(audioCtx.destination);
+    noise.start(audioCtx.currentTime + startDelay);
+  }
+
+  function startCrackle(){
+    const bufferSize = audioCtx.sampleRate * 2;
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++){
+      data[i] = (Math.random() < 0.015) ? (Math.random() * 2 - 1) * 0.4 : 0;
+    }
+    crackleSource = audioCtx.createBufferSource();
+    crackleSource.buffer = buffer;
+    crackleSource.loop = true;
+    const g = audioCtx.createGain();
+    g.gain.value = 0.015;
+    crackleSource.connect(g); g.connect(audioCtx.destination);
+    crackleSource.start();
+  }
+  function stopCrackle(){
+    if (crackleSource){ try{ crackleSource.stop(); }catch(e){} crackleSource = null; }
+  }
+
+  function musicStep(){
+    if (!musicOn) return;
+    const chord = CHORDS[chordIndex % CHORDS.length];
+    const bass = BASS[chordIndex % BASS.length];
+
+    playChordNote(bass, 0, 2.0, 0.04);
+    chord.forEach((freq, i) => {
+      playChordNote(freq, 0.15 + i * 0.22, 1.7, 0.018);
+    });
+    // a little sparkle bell on top every other bar — kawaii touch
+    if (chordIndex % 2 === 0){
+      playBell(chord[chord.length - 1] * 2, 1.1, 0.03);
+    }
+    playSoftHat(0.9);
+    playSoftHat(1.6);
+
+    chordIndex++;
+    musicTimer = setTimeout(musicStep, 2100);
+  }
+
+  function startMusic(){
+    ensureAudio();
+    if (!lofiFilter){
+      lofiFilter = audioCtx.createBiquadFilter();
+      lofiFilter.type = 'lowpass';
+      lofiFilter.frequency.value = 1700;
+      lofiFilter.Q.value = 0.6;
+      lofiFilter.connect(audioCtx.destination);
+    }
+    musicOn = true;
+    chordIndex = 0;
+    startCrackle();
+    musicStep();
+    soundBtn.textContent = '🔊';
+    soundBtn.classList.remove('muted');
+  }
+  function stopMusic(){
+    musicOn = false;
+    clearTimeout(musicTimer);
+    stopCrackle();
+    soundBtn.textContent = '🔈';
+    soundBtn.classList.add('muted');
+  }
+
+  const soundBtn = document.getElementById('soundBtn');
+  soundBtn.addEventListener('click', () => {
+    ensureAudio();
+    if (musicOn) stopMusic(); else startMusic();
+  });
+  /* ------------------------------------------------------------------- */
+</script>
+
+</body>
+</html>

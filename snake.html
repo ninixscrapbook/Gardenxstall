@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Snake — Game Garden</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#5B4A32;
+    --ink-soft:#8A7A5C;
+    --paper:#FFFDF6;
+    --white:#ffffff;
+    --awning-a:#E8B7A4;
+    --awning-b:#FAE6DC;
+    --stage:#F2CFC0;
+    --terracotta:#E0A188;
+    --terracotta-deep:#C98567;
+    --green-light:#C7DE6E;
+    --pink:#F2897E;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 1px 1px, rgba(197,127,104,0.16) 1px, transparent 0) 0 0/26px 26px,
+      var(--paper);
+    font-family:'Nunito', sans-serif;
+    color:var(--ink);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+
+  .topbar{
+    width:100%;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 6vw 0;
+    max-width:640px;
+  }
+  .back{
+    font-family:'Press Start 2P', monospace;
+    font-size:9px;
+    color:var(--ink);
+    text-decoration:none;
+    background:var(--white);
+    border:2px solid var(--ink);
+    border-radius:8px;
+    padding:8px 12px;
+    box-shadow:2px 2px 0 rgba(91,74,50,0.18);
+  }
+  .stall-tag{
+    font-family:'Press Start 2P', monospace;
+    font-size:9px;
+    background:var(--awning-b);
+    border:2px solid var(--ink);
+    padding:8px 12px;
+    border-radius:8px;
+  }
+  .music-btn{
+    width:34px; height:34px;
+    border-radius:50%;
+    border:2px solid var(--ink);
+    background:var(--white);
+    box-shadow:2px 2px 0 rgba(91,74,50,0.18);
+    font-size:15px;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    padding:0;
+  }
+  .music-btn:active{ transform:translateY(1px); box-shadow:1px 1px 0 rgba(91,74,50,0.18); }
+
+  h1{
+    font-family:'Fredoka', sans-serif;
+    font-weight:700;
+    font-size:clamp(28px, 6vw, 42px);
+    margin:18px 0 2px;
+    text-align:center;
+  }
+  .sub{
+    color:var(--ink-soft);
+    font-size:14px;
+    margin:0 0 18px;
+    text-align:center;
+    padding:0 8vw;
+  }
+
+  .scorebar{
+    display:flex;
+    gap:14px;
+    margin-bottom:14px;
+  }
+  .pill{
+    background:var(--white);
+    border:2.5px solid var(--ink);
+    border-radius:12px;
+    padding:8px 16px;
+    text-align:center;
+    box-shadow:3px 3px 0 rgba(91,74,50,0.15);
+  }
+  .pill .label{
+    font-family:'Press Start 2P', monospace;
+    font-size:7px;
+    color:var(--ink-soft);
+    letter-spacing:1px;
+  }
+  .pill .val{
+    font-family:'Fredoka', sans-serif;
+    font-weight:700;
+    font-size:20px;
+    color:var(--terracotta-deep);
+  }
+
+  .speed-wrap{
+    background:var(--white);
+    border:2.5px solid var(--ink);
+    border-radius:14px;
+    padding:10px 16px 12px;
+    margin-bottom:16px;
+    box-shadow:3px 3px 0 rgba(91,74,50,0.15);
+    width:min(340px, 78vw);
+  }
+  .speed-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .speed-emoji{ font-size:16px; }
+  .speed-row input[type="range"]{
+    flex:1;
+    -webkit-appearance:none;
+    appearance:none;
+    height:8px;
+    border-radius:6px;
+    background: linear-gradient(90deg, var(--awning-b), var(--terracotta));
+    border:2px solid var(--ink);
+    outline:none;
+  }
+  .speed-row input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    appearance:none;
+    width:22px; height:22px;
+    border-radius:50%;
+    background:var(--terracotta-deep);
+    border:2.5px solid var(--ink);
+    box-shadow:2px 2px 0 rgba(91,74,50,0.25);
+    cursor:pointer;
+    margin-top:-1px;
+  }
+  .speed-row input[type="range"]::-moz-range-thumb{
+    width:22px; height:22px;
+    border-radius:50%;
+    background:var(--terracotta-deep);
+    border:2.5px solid var(--ink);
+    box-shadow:2px 2px 0 rgba(91,74,50,0.25);
+    cursor:pointer;
+  }
+  .speed-label{
+    font-family:'Press Start 2P', monospace;
+    font-size:8px;
+    color:var(--ink-soft);
+    text-align:center;
+    margin-top:8px;
+    letter-spacing:0.5px;
+  }
+
+  .board-wrap{
+    position:relative;
+    border:4px solid var(--ink);
+    border-radius:18px;
+    box-shadow:6px 6px 0 rgba(91,74,50,0.18);
+    overflow:hidden;
+    background: var(--stage);
+    touch-action:none;
+  }
+  #board{
+    display:block;
+  }
+
+  .overlay{
+    position:absolute; inset:0;
+    background:rgba(255,253,246,0.94);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center;
+    padding:20px;
+    gap:12px;
+  }
+  .overlay h2{
+    font-family:'Fredoka', sans-serif;
+    font-size:26px;
+    margin:0;
+    color:var(--ink);
+  }
+  .overlay p{
+    margin:0;
+    color:var(--ink-soft);
+    font-size:14px;
+    max-width:280px;
+  }
+  .btn{
+    font-family:'Press Start 2P', monospace;
+    font-size:11px;
+    background:var(--terracotta);
+    color:var(--paper);
+    border:2.5px solid var(--ink);
+    padding:12px 20px;
+    border-radius:10px;
+    box-shadow:3px 3px 0 rgba(91,74,50,0.3);
+    cursor:pointer;
+    transition:transform .12s ease;
+  }
+  .btn:active{ transform:translateY(2px); box-shadow:1px 1px 0 rgba(91,74,50,0.3); }
+
+  .rival{
+    font-size:12px;
+    color:var(--ink-soft);
+    background:var(--awning-b);
+    border:2px solid var(--ink);
+    border-radius:8px;
+    padding:6px 10px;
+  }
+
+  .controls-hint{
+    margin-top:16px;
+    font-size:12px;
+    color:var(--ink-soft);
+    text-align:center;
+  }
+
+  .dpad{
+    display:grid;
+    grid-template-columns:repeat(3, 52px);
+    grid-template-rows:repeat(3, 52px);
+    gap:6px;
+    margin-top:18px;
+  }
+  .dpad button{
+    border:2.5px solid var(--ink);
+    background:var(--white);
+    border-radius:10px;
+    font-size:18px;
+    color:var(--ink);
+    box-shadow:2px 2px 0 rgba(91,74,50,0.18);
+    cursor:pointer;
+  }
+  .dpad button:active{ transform:translateY(1px); box-shadow:1px 1px 0 rgba(91,74,50,0.18); }
+  .dpad .up{ grid-column:2; grid-row:1; }
+  .dpad .left{ grid-column:1; grid-row:2; }
+  .dpad .right{ grid-column:3; grid-row:2; }
+  .dpad .down{ grid-column:2; grid-row:3; }
+
+  footer{
+    font-family:'Press Start 2P', monospace;
+    font-size:8px;
+    color:var(--ink-soft);
+    margin:30px 0 20px;
+  }
+
+  @media (max-width:480px){
+    .dpad{ grid-template-columns:repeat(3, 46px); grid-template-rows:repeat(3, 46px); }
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="back" href="index.html">◄ GARDEN</a>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <button class="music-btn" id="musicToggle" aria-label="Toggle music">🔊</button>
+      <div class="stall-tag">STALL 03</div>
+    </div>
+  </div>
+
+  <h1>🐰 Snake</h1>
+  <p class="sub">Bunny vs. Bear — grow longest through the hedges before you tangle yourself up.</p>
+
+  <div class="scorebar">
+    <div class="pill">
+      <div class="label">SCORE</div>
+      <div class="val" id="score">0</div>
+    </div>
+    <div class="pill">
+      <div class="label">BEST</div>
+      <div class="val" id="best">0</div>
+    </div>
+  </div>
+
+  <div class="speed-wrap">
+    <div class="speed-row">
+      <span class="speed-emoji">🐢</span>
+      <input type="range" id="speedSlider" min="1" max="5" step="1" value="3">
+      <span class="speed-emoji">🐇</span>
+    </div>
+    <div class="speed-label" id="speedLabel">Speed: Classic</div>
+  </div>
+
+  <div class="board-wrap">
+    <canvas id="board" width="400" height="400"></canvas>
+    <div class="overlay" id="overlay">
+      <h2>Ready, Bunny?</h2>
+      <div class="rival">🐻 Bear's garden record: <strong id="rivalScore">18</strong></div>
+      <p>Use arrow keys / WASD, swipe, or the pad below. Set the pace with the 🐢–🐇 slider above — great for kids or a more relaxed round. Eat the carrots and acorns, don't bite your own tail or the hedge wall.</p>
+      <button class="btn" id="startBtn">START ►</button>
+    </div>
+  </div>
+
+  <div class="dpad" aria-hidden="true">
+    <button class="up" data-dir="up">▲</button>
+    <button class="left" data-dir="left">◄</button>
+    <button class="right" data-dir="right">►</button>
+    <button class="down" data-dir="down">▼</button>
+  </div>
+
+  <p class="controls-hint">Tip: tap the board any time to pause.</p>
+
+  <footer>MADE WITH ♥ IN THE GARDEN</footer>
+
+<script>
+(function(){
+  const canvas = document.getElementById('board');
+  const ctx = canvas.getContext('2d');
+  const GRID = 20;
+  const CELL = canvas.width / GRID;
+
+  // ---------- ambient background music (no external files) ----------
+  const gardenMusic = (function(){
+    let actx, master, filter, playing = false, muted = false, timer = null, step = 0;
+    const SCALE = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25]; // C major pentatonic-ish
+    function ensure(){
+      if(!actx){
+        actx = new (window.AudioContext || window.webkitAudioContext)();
+        master = actx.createGain();
+        master.gain.value = 0.18;
+        filter = actx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 1800;
+        filter.connect(master);
+        master.connect(actx.destination);
+      }
+    }
+    function note(freq, time, dur, vol){
+      const osc = actx.createOscillator();
+      const g = actx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      g.gain.setValueAtTime(0, time);
+      g.gain.linearRampToValueAtTime(vol, time + 0.06);
+      g.gain.exponentialRampToValueAtTime(0.001, time + dur);
+      osc.connect(g);
+      g.connect(filter);
+      osc.start(time);
+      osc.stop(time + dur + 0.05);
+    }
+    function scheduleLoop(){
+      if(!playing) return;
+      const now = actx.currentTime;
+      const freq = SCALE[Math.floor(Math.random()*SCALE.length)];
+      note(freq, now, 1.0, 0.16);
+      if(step % 4 === 0) note(SCALE[0]/2, now, 2.0, 0.10);
+      step++;
+      timer = setTimeout(scheduleLoop, 620);
+    }
+    function start(){
+      ensure();
+      if(actx.state === 'suspended') actx.resume();
+      if(playing) return;
+      playing = true;
+      scheduleLoop();
+    }
+    function toggleMute(){
+      ensure();
+      muted = !muted;
+      master.gain.value = muted ? 0 : 0.18;
+      return muted;
+    }
+    return { start, toggleMute };
+  })();
+
+  const musicBtn = document.getElementById('musicToggle');
+  musicBtn.addEventListener('click', () => {
+    const isMuted = gardenMusic.toggleMute();
+    musicBtn.textContent = isMuted ? '🔇' : '🔊';
+  });
+
+  const scoreEl = document.getElementById('score');
+  const bestEl = document.getElementById('best');
+  const overlay = document.getElementById('overlay');
+  const startBtn = document.getElementById('startBtn');
+  const rivalScoreEl = document.getElementById('rivalScore');
+
+  const RIVAL_SCORE = 18; // Bear's flavor "record" to beat
+  rivalScoreEl.textContent = RIVAL_SCORE;
+
+  const COLORS = {
+    bg1: '#F2CFC0',
+    bg2: '#ECC3B2',
+    snakeHead: '#8A6C52',
+    snakeBody: '#FBE5DA',
+    snakeOutline: '#5B4A32',
+    food: '#E0A188',
+  };
+
+  let snake, dir, nextDir, food, score, best, running, tickMs, loopId;
+
+  best = 0;
+  bestEl.textContent = best;
+
+  // --- speed control ---
+  const speedSlider = document.getElementById('speedSlider');
+  const speedLabel = document.getElementById('speedLabel');
+  const SPEED_LEVELS = {
+    1: { base: 240, min: 170, name: 'Sprout (very slow)' },
+    2: { base: 180, min: 120, name: 'Gentle' },
+    3: { base: 130, min: 80,  name: 'Classic' },
+    4: { base: 95,  min: 55,  name: 'Zippy' },
+    5: { base: 65,  min: 38,  name: 'Turbo!' },
+  };
+  let baseSpeed = SPEED_LEVELS[3].base;
+  let minSpeed = SPEED_LEVELS[3].min;
+  let accelOffset = 0; // how much we've already sped up from eating
+
+  function applySpeedLevel(level, live){
+    const cfg = SPEED_LEVELS[level];
+    baseSpeed = cfg.base;
+    minSpeed = cfg.min;
+    speedLabel.textContent = 'Speed: ' + cfg.name;
+    if(live){
+      tickMs = Math.max(minSpeed, baseSpeed - accelOffset);
+    }
+  }
+  speedSlider.addEventListener('input', () => {
+    applySpeedLevel(speedSlider.value, running);
+  });
+  applySpeedLevel(speedSlider.value, false);
+
+  function reset(){
+    snake = [
+      {x:9,y:10},{x:8,y:10},{x:7,y:10}
+    ];
+    dir = 'right';
+    nextDir = 'right';
+    score = 0;
+    accelOffset = 0;
+    tickMs = baseSpeed;
+    scoreEl.textContent = score;
+    placeFood();
+    running = false;
+  }
+
+  function placeFood(){
+    let pos;
+    do{
+      pos = { x: Math.floor(Math.random()*GRID), y: Math.floor(Math.random()*GRID) };
+    } while(snake.some(s => s.x===pos.x && s.y===pos.y));
+    // alternate icon just for flavor
+    pos.icon = Math.random() < 0.5 ? '🥕' : '🌰';
+    food = pos;
+  }
+
+  function draw(){
+    // checkerboard stage
+    for(let y=0;y<GRID;y++){
+      for(let x=0;x<GRID;x++){
+        ctx.fillStyle = (x+y)%2===0 ? COLORS.bg1 : COLORS.bg2;
+        ctx.fillRect(x*CELL, y*CELL, CELL, CELL);
+      }
+    }
+
+    // food
+    ctx.font = `${CELL*0.75}px serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(food.icon, food.x*CELL + CELL/2, food.y*CELL + CELL/2 + 1);
+
+    // snake
+    snake.forEach((seg, i) => {
+      const isHead = i===0;
+      ctx.fillStyle = isHead ? COLORS.snakeHead : COLORS.snakeBody;
+      const pad = isHead ? 1 : 2;
+      roundRect(seg.x*CELL+pad, seg.y*CELL+pad, CELL-pad*2, CELL-pad*2, 6);
+      ctx.fill();
+      ctx.strokeStyle = COLORS.snakeOutline;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      if(isHead){
+        ctx.fillStyle = '#FFFDF6';
+        const eyeOffsets = dirEyeOffsets();
+        eyeOffsets.forEach(o => {
+          ctx.beginPath();
+          ctx.arc(seg.x*CELL + CELL/2 + o.x, seg.y*CELL + CELL/2 + o.y, CELL*0.09, 0, Math.PI*2);
+          ctx.fill();
+        });
+      }
+    });
+  }
+
+  function dirEyeOffsets(){
+    const d = CELL*0.18;
+    switch(dir){
+      case 'up': return [{x:-d,y:-d},{x:d,y:-d}];
+      case 'down': return [{x:-d,y:d},{x:d,y:d}];
+      case 'left': return [{x:-d,y:-d},{x:-d,y:d}];
+      default: return [{x:d,y:-d},{x:d,y:d}];
+    }
+  }
+
+  function roundRect(x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
+
+  function step(){
+    dir = nextDir;
+    const head = {...snake[0]};
+    if(dir==='up') head.y--;
+    if(dir==='down') head.y++;
+    if(dir==='left') head.x--;
+    if(dir==='right') head.x++;
+
+    // wall collision
+    if(head.x<0 || head.x>=GRID || head.y<0 || head.y>=GRID){
+      return gameOver();
+    }
+    // self collision
+    if(snake.some(s => s.x===head.x && s.y===head.y)){
+      return gameOver();
+    }
+
+    snake.unshift(head);
+
+    if(head.x===food.x && head.y===food.y){
+      score++;
+      scoreEl.textContent = score;
+      if(tickMs > minSpeed){
+        accelOffset = Math.min(accelOffset + 2, baseSpeed - minSpeed);
+        tickMs = Math.max(minSpeed, baseSpeed - accelOffset);
+      }
+      placeFood();
+    } else {
+      snake.pop();
+    }
+
+    draw();
+  }
+
+  function gameOver(){
+    running = false;
+    clearTimeout(loopId);
+    if(score > best){
+      best = score;
+      bestEl.textContent = best;
+    }
+    overlay.style.display = 'flex';
+    overlay.innerHTML = `
+      <h2>${score > RIVAL_SCORE ? 'Bunny wins the patch! 🎉' : 'Bear keeps the crown 🐻'}</h2>
+      <div class="rival">Your score: <strong>${score}</strong> · Bear's record: <strong>${RIVAL_SCORE}</strong></div>
+      <p>${score > RIVAL_SCORE ? "You out-grew the garden's best gardener!" : "So close — try weaving through the hedges more efficiently."}</p>
+      <button class="btn" id="startBtn2">PLAY AGAIN ►</button>
+    `;
+    document.getElementById('startBtn2').addEventListener('click', begin);
+  }
+
+  function loop(){
+    if(!running) return;
+    step();
+    loopId = setTimeout(loop, tickMs);
+  }
+
+  function begin(){
+    reset();
+    overlay.style.display = 'none';
+    running = true;
+    draw();
+    loop();
+  }
+
+  startBtn.addEventListener('click', () => { gardenMusic.start(); begin(); });
+
+  // keyboard
+  const KEY_MAP = {
+    ArrowUp:'up', ArrowDown:'down', ArrowLeft:'left', ArrowRight:'right',
+    w:'up', s:'down', a:'left', d:'right',
+    W:'up', S:'down', A:'left', D:'right'
+  };
+  const OPPOSITE = { up:'down', down:'up', left:'right', right:'left' };
+
+  window.addEventListener('keydown', e => {
+    const d = KEY_MAP[e.key];
+    if(!d) return;
+    e.preventDefault();
+    if(!running) return;
+    if(OPPOSITE[d] === dir) return;
+    nextDir = d;
+  });
+
+  // dpad buttons
+  document.querySelectorAll('.dpad button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const d = btn.dataset.dir;
+      if(!running) return;
+      if(OPPOSITE[d] === dir) return;
+      nextDir = d;
+    });
+  });
+
+  // swipe controls
+  let touchStart = null;
+  canvas.addEventListener('touchstart', e => {
+    touchStart = { x:e.touches[0].clientX, y:e.touches[0].clientY };
+  }, {passive:true});
+  canvas.addEventListener('touchend', e => {
+    if(!touchStart || !running) return;
+    const dx = e.changedTouches[0].clientX - touchStart.x;
+    const dy = e.changedTouches[0].clientY - touchStart.y;
+    let d;
+    if(Math.abs(dx) > Math.abs(dy)){
+      d = dx > 0 ? 'right' : 'left';
+    } else {
+      d = dy > 0 ? 'down' : 'up';
+    }
+    if(OPPOSITE[d] !== dir) nextDir = d;
+    touchStart = null;
+  }, {passive:true});
+
+  // tap board to pause/resume
+  canvas.addEventListener('click', () => {
+    if(overlay.style.display === 'flex') return;
+    if(running){
+      running = false;
+      clearTimeout(loopId);
+      overlay.style.display = 'flex';
+      overlay.innerHTML = `
+        <h2>Paused</h2>
+        <p>Take a breath in the hedges.</p>
+        <button class="btn" id="resumeBtn">RESUME ►</button>
+      `;
+      document.getElementById('resumeBtn').addEventListener('click', () => {
+        overlay.style.display = 'none';
+        running = true;
+        loop();
+      });
+    }
+  });
+
+  reset();
+  draw();
+})();
+</script>
+
+</body>
+</html>

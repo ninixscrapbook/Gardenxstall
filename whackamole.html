@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Whack-a-Mole — Game Garden</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#5B4A32;
+    --ink-soft:#8A7A5C;
+    --paper:#FFFDF6;
+    --white:#ffffff;
+    --awning-a:#8C5FA6;
+    --awning-b:#EBAFCB;
+    --stage:#B9DCEF;
+    --burnt:#C978B0;
+    --burnt-deep:#6E4380;
+    --soil:#5A3F63;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 1px 1px, rgba(110,67,128,0.14) 1px, transparent 0) 0 0/26px 26px,
+      var(--paper);
+    font-family:'Nunito', sans-serif;
+    color:var(--ink);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+
+  .topbar{
+    width:100%;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 6vw 0;
+    max-width:640px;
+  }
+  .back{
+    font-family:'Press Start 2P', monospace;
+    font-size:9px;
+    color:var(--ink);
+    text-decoration:none;
+    background:var(--white);
+    border:2px solid var(--ink);
+    border-radius:8px;
+    padding:8px 12px;
+    box-shadow:2px 2px 0 rgba(91,74,50,0.18);
+  }
+  .stall-tag{
+    font-family:'Press Start 2P', monospace;
+    font-size:9px;
+    background:var(--awning-b);
+    border:2px solid var(--ink);
+    padding:8px 12px;
+    border-radius:8px;
+  }
+  .music-btn{
+    width:34px; height:34px;
+    border-radius:50%;
+    border:2px solid var(--ink);
+    background:var(--white);
+    box-shadow:2px 2px 0 rgba(91,74,50,0.18);
+    font-size:15px;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    padding:0;
+  }
+  .music-btn:active{ transform:translateY(1px); box-shadow:1px 1px 0 rgba(91,74,50,0.18); }
+
+  h1{
+    font-family:'Fredoka', sans-serif;
+    font-weight:700;
+    font-size:clamp(28px, 6vw, 42px);
+    margin:18px 0 2px;
+    text-align:center;
+  }
+  .sub{
+    color:var(--ink-soft);
+    font-size:14px;
+    margin:0 0 18px;
+    text-align:center;
+    padding:0 8vw;
+  }
+
+  .scorebar{
+    display:flex;
+    gap:14px;
+    margin-bottom:18px;
+  }
+  .pill{
+    background:var(--white);
+    border:2.5px solid var(--ink);
+    border-radius:12px;
+    padding:8px 16px;
+    text-align:center;
+    box-shadow:3px 3px 0 rgba(91,74,50,0.15);
+    min-width:76px;
+  }
+  .pill .label{
+    font-family:'Press Start 2P', monospace;
+    font-size:7px;
+    color:var(--ink-soft);
+    letter-spacing:1px;
+  }
+  .pill .val{
+    font-family:'Fredoka', sans-serif;
+    font-weight:700;
+    font-size:20px;
+    color:var(--burnt-deep);
+  }
+  .pill.timer .val{ color:var(--burnt); }
+
+  .board-wrap{
+    position:relative;
+    border:4px solid var(--ink);
+    border-radius:18px;
+    box-shadow:6px 6px 0 rgba(91,74,50,0.18);
+    overflow:hidden;
+    background: linear-gradient(180deg, var(--stage), var(--awning-b));
+    padding:22px;
+    touch-action:manipulation;
+  }
+  #grid{
+    display:grid;
+    grid-template-columns:repeat(3, 96px);
+    grid-template-rows:repeat(3, 96px);
+    gap:16px;
+  }
+  .hole{
+    position:relative;
+    border-radius:50%;
+    background: radial-gradient(circle at 50% 40%, var(--soil), #362540 78%);
+    border:3px solid var(--ink);
+    box-shadow: inset 0 8px 14px rgba(0,0,0,0.35);
+    overflow:hidden;
+    cursor:pointer;
+  }
+  .critter{
+    position:absolute;
+    left:50%; bottom:-100%;
+    transform:translateX(-50%);
+    font-size:48px;
+    line-height:1;
+    transition: bottom .16s cubic-bezier(.34,1.56,.64,1);
+    user-select:none;
+    -webkit-user-select:none;
+  }
+  .hole.up .critter{ bottom:6%; }
+  .hole.whacked .critter{ transform:translateX(-50%) scale(0.6) rotate(15deg); opacity:0.4; }
+  .pop{
+    position:absolute;
+    font-family:'Fredoka', sans-serif;
+    font-weight:700;
+    font-size:16px;
+    color:var(--burnt-deep);
+    pointer-events:none;
+    animation: floatUp .55s ease forwards;
+  }
+  @keyframes floatUp{
+    0%{ opacity:1; transform:translateY(0); }
+    100%{ opacity:0; transform:translateY(-34px); }
+  }
+
+  .overlay{
+    position:absolute; inset:0;
+    background:rgba(255,253,246,0.95);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center;
+    padding:20px;
+    gap:12px;
+    z-index:5;
+  }
+  .overlay h2{
+    font-family:'Fredoka', sans-serif;
+    font-size:24px;
+    margin:0;
+    color:var(--ink);
+  }
+  .overlay p{
+    margin:0;
+    color:var(--ink-soft);
+    font-size:13px;
+    max-width:280px;
+  }
+  .btn{
+    font-family:'Press Start 2P', monospace;
+    font-size:11px;
+    background:var(--burnt);
+    color:var(--paper);
+    border:2.5px solid var(--ink);
+    padding:12px 20px;
+    border-radius:10px;
+    box-shadow:3px 3px 0 rgba(91,74,50,0.3);
+    cursor:pointer;
+    transition:transform .12s ease;
+  }
+  .btn:active{ transform:translateY(2px); box-shadow:1px 1px 0 rgba(91,74,50,0.3); }
+
+  .rival{
+    font-size:12px;
+    color:var(--ink-soft);
+    background:var(--awning-b);
+    border:2px solid var(--ink);
+    border-radius:8px;
+    padding:6px 10px;
+  }
+
+  .legend{
+    margin-top:16px;
+    font-size:12px;
+    color:var(--ink-soft);
+    text-align:center;
+    max-width:300px;
+  }
+
+  footer{
+    font-family:'Press Start 2P', monospace;
+    font-size:8px;
+    color:var(--ink-soft);
+    margin:30px 0 20px;
+  }
+
+  @media (max-width:480px){
+    #grid{ grid-template-columns:repeat(3, 78px); grid-template-rows:repeat(3, 78px); gap:12px; }
+    .critter{ font-size:38px; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="back" href="index.html">◄ GARDEN</a>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <button class="music-btn" id="musicToggle" aria-label="Toggle music">🔊</button>
+      <div class="stall-tag">STALL 05</div>
+    </div>
+  </div>
+
+  <h1>🦊 Whack-a-Mole</h1>
+  <p class="sub">Fox vs. Chick — quickest paws win the round.</p>
+
+  <div class="scorebar">
+    <div class="pill">
+      <div class="label">SCORE</div>
+      <div class="val" id="score">0</div>
+    </div>
+    <div class="pill timer">
+      <div class="label">TIME</div>
+      <div class="val" id="timer">30</div>
+    </div>
+    <div class="pill">
+      <div class="label">BEST</div>
+      <div class="val" id="best">0</div>
+    </div>
+  </div>
+
+  <div class="board-wrap">
+    <div id="grid"></div>
+    <div class="overlay" id="overlay">
+      <h2>Ready, Fox?</h2>
+      <div class="rival">🐣 Chick's quickest tally: <strong>14</strong></div>
+      <p>Tap the fox 🦊 as it pops up for +1. Watch out for the chick 🐣 hiding in the dirt — tapping it costs you a point!</p>
+      <button class="btn" id="startBtn">START ►</button>
+    </div>
+  </div>
+
+  <p class="legend">30 seconds on the clock. Moles get quicker as time runs low.</p>
+
+  <footer>MADE WITH ♥ IN THE GARDEN</footer>
+
+<script>
+(function(){
+  const grid = document.getElementById('grid');
+  const scoreEl = document.getElementById('score');
+  const timerEl = document.getElementById('timer');
+  const bestEl = document.getElementById('best');
+  const overlay = document.getElementById('overlay');
+  const startBtn = document.getElementById('startBtn');
+
+  // ---------- ambient background music (no external files) ----------
+  const gardenMusic = (function(){
+    let actx, master, filter, playing = false, muted = false, timer = null, step = 0;
+    const SCALE = [349.23, 392.00, 440.00, 523.25, 587.33, 659.25]; // F pentatonic-ish, brighter/perky
+    function ensure(){
+      if(!actx){
+        actx = new (window.AudioContext || window.webkitAudioContext)();
+        master = actx.createGain();
+        master.gain.value = 0.7;
+        filter = actx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 2000;
+        const comp = actx.createDynamicsCompressor();
+        comp.threshold.value = -24;
+        comp.knee.value = 28;
+        comp.ratio.value = 10;
+        comp.attack.value = 0.003;
+        comp.release.value = 0.22;
+        filter.connect(comp);
+        comp.connect(master);
+        master.connect(actx.destination);
+      }
+    }
+    function note(freq, time, dur, vol){
+      const osc = actx.createOscillator();
+      const g = actx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      g.gain.setValueAtTime(0, time);
+      g.gain.linearRampToValueAtTime(vol, time + 0.04);
+      g.gain.exponentialRampToValueAtTime(0.001, time + dur);
+      osc.connect(g);
+      g.connect(filter);
+      osc.start(time);
+      osc.stop(time + dur + 0.05);
+    }
+    function scheduleLoop(){
+      if(!playing) return;
+      const now = actx.currentTime;
+      const freq = SCALE[Math.floor(Math.random()*SCALE.length)];
+      note(freq, now, 0.5, 0.28);
+      if(step % 4 === 0) note(SCALE[0]/2, now, 1.4, 0.16);
+      step++;
+      timer = setTimeout(scheduleLoop, 420);
+    }
+    function start(){
+      ensure();
+      if(actx.state === 'suspended') actx.resume();
+      if(playing) return;
+      playing = true;
+      scheduleLoop();
+    }
+    function toggleMute(){
+      ensure();
+      muted = !muted;
+      master.gain.value = muted ? 0 : 0.7;
+      return muted;
+    }
+    return { start, toggleMute };
+  })();
+
+  const musicBtn = document.getElementById('musicToggle');
+  musicBtn.addEventListener('click', () => {
+    const isMuted = gardenMusic.toggleMute();
+    musicBtn.textContent = isMuted ? '🔇' : '🔊';
+  });
+
+  const RIVAL_SCORE = 14;
+  const GAME_LENGTH = 30;
+  const HOLE_COUNT = 9;
+
+  let holes = [];
+  let score = 0;
+  let best = 0;
+  let timeLeft = GAME_LENGTH;
+  let running = false;
+  let spawnTimeout = null;
+  let countdownInterval = null;
+  let activeHoleIndex = null;
+
+  bestEl.textContent = best;
+
+  // build holes
+  for(let i=0;i<HOLE_COUNT;i++){
+    const hole = document.createElement('div');
+    hole.className = 'hole';
+    const critter = document.createElement('div');
+    critter.className = 'critter';
+    hole.appendChild(critter);
+    hole.addEventListener('click', () => whack(i));
+    grid.appendChild(hole);
+    holes.push({ el: hole, critterEl: critter, up: false, type: null, hideTimeout: null });
+  }
+
+  function randomHoleIndex(excludeIndex){
+    let idx;
+    do{
+      idx = Math.floor(Math.random()*HOLE_COUNT);
+    } while(idx === excludeIndex);
+    return idx;
+  }
+
+  function currentSpawnSpeed(){
+    // ranges get faster as time runs low
+    const progress = 1 - (timeLeft / GAME_LENGTH); // 0 -> 1
+    const minGap = 480, maxGap = 900;
+    const showMin = 550, showMax = 1000;
+    const gap = maxGap - progress*(maxGap-minGap);
+    const show = showMax - progress*(showMax-showMin);
+    return { gap: gap + Math.random()*250, show: show + Math.random()*200 };
+  }
+
+  function spawn(){
+    if(!running) return;
+    const idx = randomHoleIndex(activeHoleIndex);
+    activeHoleIndex = idx;
+    const h = holes[idx];
+    const isDecoy = Math.random() < 0.28;
+    h.type = isDecoy ? 'chick' : 'fox';
+    h.critterEl.textContent = isDecoy ? '🐣' : '🦊';
+    h.el.classList.remove('whacked');
+    h.el.classList.add('up');
+    h.up = true;
+
+    const { gap, show } = currentSpawnSpeed();
+
+    h.hideTimeout = setTimeout(() => {
+      h.el.classList.remove('up');
+      h.up = false;
+      activeHoleIndex = null;
+    }, show);
+
+    spawnTimeout = setTimeout(spawn, gap);
+  }
+
+  function whack(idx){
+    if(!running) return;
+    const h = holes[idx];
+    if(!h.up) return;
+    h.up = false;
+    clearTimeout(h.hideTimeout);
+    h.el.classList.add('whacked');
+    setTimeout(() => { h.el.classList.remove('up'); h.el.classList.remove('whacked'); }, 160);
+
+    const delta = h.type === 'fox' ? 1 : -1;
+    score = Math.max(0, score + delta);
+    scoreEl.textContent = score;
+
+    const pop = document.createElement('div');
+    pop.className = 'pop';
+    pop.textContent = delta > 0 ? '+1' : '-1';
+    pop.style.left = '50%';
+    pop.style.top = '20%';
+    pop.style.transform = 'translateX(-50%)';
+    h.el.appendChild(pop);
+    setTimeout(() => pop.remove(), 550);
+
+    activeHoleIndex = null;
+  }
+
+  function tickTimer(){
+    timeLeft--;
+    timerEl.textContent = timeLeft;
+    if(timeLeft <= 0){
+      endGame();
+    }
+  }
+
+  function startGame(){
+    score = 0;
+    timeLeft = GAME_LENGTH;
+    scoreEl.textContent = score;
+    timerEl.textContent = timeLeft;
+    running = true;
+    overlay.style.display = 'none';
+    holes.forEach(h => { h.el.classList.remove('up','whacked'); h.up = false; });
+    activeHoleIndex = null;
+    spawn();
+    countdownInterval = setInterval(tickTimer, 1000);
+  }
+
+  function endGame(){
+    running = false;
+    clearTimeout(spawnTimeout);
+    clearInterval(countdownInterval);
+    holes.forEach(h => { h.el.classList.remove('up'); h.up = false; clearTimeout(h.hideTimeout); });
+
+    if(score > best){ best = score; bestEl.textContent = best; }
+    const beatRival = score > RIVAL_SCORE;
+
+    overlay.innerHTML = `
+      <h2>${beatRival ? "Fox takes the stall! 🎉" : "Chick keeps the crown 🐣"}</h2>
+      <div class="rival">Your score: <strong>${score}</strong> · Chick's tally: <strong>${RIVAL_SCORE}</strong></div>
+      <p>${beatRival ? "Lightning paws — the garden is impressed." : "So close! Try to spot the fox a beat faster next round."}</p>
+      <button class="btn" id="startBtn2">PLAY AGAIN ►</button>
+    `;
+    overlay.style.display = 'flex';
+    document.getElementById('startBtn2').addEventListener('click', startGame);
+  }
+
+  startBtn.addEventListener('click', () => { gardenMusic.start(); startGame(); });
+})();
+</script>
+
+</body>
+</html>

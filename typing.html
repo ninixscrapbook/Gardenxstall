@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Typing Speed — Game Garden</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#5B4A32;
+    --ink-soft:#8A7A5C;
+    --paper:#FFFDF6;
+    --white:#ffffff;
+    --pink:#FFE3FF;
+    --lilac:#EFDBFF;
+    --purple:#D9CCFF;
+    --periwinkle:#D2D8FF;
+    --skyblue:#D6E2FF;
+    --deep:#8E7CD9;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 1px 1px, rgba(110,95,191,0.14) 1px, transparent 0) 0 0/26px 26px,
+      var(--paper);
+    font-family:'Nunito', sans-serif;
+    color:var(--ink);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+
+  .topbar{
+    width:100%;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 6vw 0;
+    max-width:640px;
+  }
+  .back{
+    font-family:'Press Start 2P', monospace;
+    font-size:9px;
+    color:var(--ink);
+    text-decoration:none;
+    background:var(--white);
+    border:2px solid var(--ink);
+    border-radius:8px;
+    padding:8px 12px;
+    box-shadow:2px 2px 0 rgba(91,74,50,0.18);
+  }
+  .stall-tag{
+    font-family:'Press Start 2P', monospace;
+    font-size:9px;
+    background:var(--purple);
+    border:2px solid var(--ink);
+    padding:8px 12px;
+    border-radius:8px;
+  }
+  .music-btn{
+    width:34px; height:34px;
+    border-radius:50%;
+    border:2px solid var(--ink);
+    background:var(--white);
+    box-shadow:2px 2px 0 rgba(91,74,50,0.18);
+    font-size:15px;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    padding:0;
+  }
+  .music-btn:active{ transform:translateY(1px); box-shadow:1px 1px 0 rgba(91,74,50,0.18); }
+
+  h1{
+    font-family:'Fredoka', sans-serif;
+    font-weight:700;
+    font-size:clamp(28px, 6vw, 42px);
+    margin:18px 0 2px;
+    text-align:center;
+  }
+  .sub{
+    color:var(--ink-soft);
+    font-size:14px;
+    margin:0 0 18px;
+    text-align:center;
+    padding:0 8vw;
+  }
+
+  .scorebar{
+    display:flex;
+    gap:14px;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+  .pill{
+    background:var(--white);
+    border:2.5px solid var(--ink);
+    border-radius:12px;
+    padding:8px 16px;
+    text-align:center;
+    box-shadow:3px 3px 0 rgba(91,74,50,0.15);
+    min-width:70px;
+  }
+  .pill .label{
+    font-family:'Press Start 2P', monospace;
+    font-size:7px;
+    color:var(--ink-soft);
+    letter-spacing:1px;
+  }
+  .pill .val{
+    font-family:'Fredoka', sans-serif;
+    font-weight:700;
+    font-size:20px;
+    color:var(--deep);
+  }
+
+  .board-wrap{
+    position:relative;
+    border:4px solid var(--ink);
+    border-radius:18px;
+    box-shadow:6px 6px 0 rgba(91,74,50,0.18);
+    background: linear-gradient(135deg, var(--pink), var(--skyblue));
+    padding:26px 22px;
+    width:min(560px, 86vw);
+  }
+
+  .prompt{
+    font-family:'Fredoka', sans-serif;
+    font-size:clamp(17px, 3.4vw, 22px);
+    line-height:1.7;
+    background:var(--white);
+    border:2.5px solid var(--ink);
+    border-radius:14px;
+    padding:18px 20px;
+    min-height:110px;
+    letter-spacing:0.3px;
+  }
+  .prompt span{ position:relative; }
+  .char-correct{ color:var(--deep); }
+  .char-incorrect{ color:#C0392B; background:#FBD9CE; border-radius:2px; }
+  .char-pending{ color:var(--ink-soft); }
+  .char-cursor{ border-left:2px solid var(--deep); animation: blink 1s step-end infinite; }
+  @keyframes blink{ 50%{ border-color:transparent; } }
+
+  #typeInput{
+    position:absolute;
+    opacity:0;
+    pointer-events:none;
+  }
+
+  .type-hint{
+    text-align:center;
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:12px;
+  }
+
+  .overlay{
+    position:absolute; inset:0;
+    background:rgba(255,253,246,0.96);
+    display:none;
+    flex-direction:column; align-items:center; justify-content:center;
+    text-align:center;
+    padding:20px;
+    gap:12px;
+    border-radius:14px;
+    z-index:5;
+  }
+  .overlay h2{
+    font-family:'Fredoka', sans-serif;
+    font-size:24px;
+    margin:0;
+    color:var(--ink);
+  }
+  .overlay p{
+    margin:0;
+    color:var(--ink-soft);
+    font-size:13px;
+    max-width:300px;
+  }
+  .btn{
+    font-family:'Press Start 2P', monospace;
+    font-size:11px;
+    background:var(--deep);
+    color:var(--paper);
+    border:2.5px solid var(--ink);
+    padding:12px 20px;
+    border-radius:10px;
+    box-shadow:3px 3px 0 rgba(91,74,50,0.3);
+    cursor:pointer;
+    transition:transform .12s ease;
+  }
+  .btn:active{ transform:translateY(2px); box-shadow:1px 1px 0 rgba(91,74,50,0.3); }
+
+  .rival{
+    font-size:12px;
+    color:var(--ink-soft);
+    background:var(--purple);
+    border:2px solid var(--ink);
+    border-radius:8px;
+    padding:6px 10px;
+  }
+
+  .results-row{
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+
+  footer{
+    font-family:'Press Start 2P', monospace;
+    font-size:8px;
+    color:var(--ink-soft);
+    margin:30px 0 20px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="back" href="index.html">◄ GARDEN</a>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <button class="music-btn" id="musicToggle" aria-label="Toggle music">🔊</button>
+      <div class="stall-tag">STALL 06</div>
+    </div>
+  </div>
+
+  <h1>🦌 Typing Speed</h1>
+  <p class="sub">Deer vs. Cat — race the prompt, fastest WPM wins.</p>
+
+  <div class="scorebar">
+    <div class="pill">
+      <div class="label">WPM</div>
+      <div class="val" id="wpm">0</div>
+    </div>
+    <div class="pill">
+      <div class="label">ACCURACY</div>
+      <div class="val" id="accuracy">100%</div>
+    </div>
+    <div class="pill">
+      <div class="label">BEST WPM</div>
+      <div class="val" id="best">0</div>
+    </div>
+  </div>
+
+  <div class="board-wrap">
+    <div class="prompt" id="prompt"></div>
+    <input type="text" id="typeInput" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div class="overlay" id="overlay">
+      <h2>Ready, Deer?</h2>
+      <div class="rival">🐱 Cat's best pace: <strong>42 WPM</strong></div>
+      <p>Tap the prompt, then type the sentence exactly as shown. The timer starts on your first keystroke.</p>
+      <button class="btn" id="startBtn">START ►</button>
+    </div>
+  </div>
+
+  <p class="type-hint">Tap the box above to focus your keyboard, then just start typing.</p>
+
+  <footer>MADE WITH ♥ IN THE GARDEN</footer>
+
+<script>
+(function(){
+  const promptEl = document.getElementById('prompt');
+  const input = document.getElementById('typeInput');
+  const wpmEl = document.getElementById('wpm');
+  const accEl = document.getElementById('accuracy');
+  const bestEl = document.getElementById('best');
+  const overlay = document.getElementById('overlay');
+  const startBtn = document.getElementById('startBtn');
+  const boardWrap = document.querySelector('.board-wrap');
+
+  // ---------- ambient background music (no external files) ----------
+  const gardenMusic = (function(){
+    let actx, master, filter, playing = false, muted = false, timer = null, step = 0;
+    const SCALE = [329.63, 369.99, 415.30, 493.88, 554.37, 659.25]; // dreamy E-ish scale
+    function ensure(){
+      if(!actx){
+        actx = new (window.AudioContext || window.webkitAudioContext)();
+        master = actx.createGain();
+        master.gain.value = 0.7;
+        filter = actx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 1700;
+        const comp = actx.createDynamicsCompressor();
+        comp.threshold.value = -24;
+        comp.knee.value = 28;
+        comp.ratio.value = 10;
+        comp.attack.value = 0.003;
+        comp.release.value = 0.22;
+        filter.connect(comp);
+        comp.connect(master);
+        master.connect(actx.destination);
+      }
+    }
+    function note(freq, time, dur, vol){
+      const osc = actx.createOscillator();
+      const g = actx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      g.gain.setValueAtTime(0, time);
+      g.gain.linearRampToValueAtTime(vol, time + 0.08);
+      g.gain.exponentialRampToValueAtTime(0.001, time + dur);
+      osc.connect(g);
+      g.connect(filter);
+      osc.start(time);
+      osc.stop(time + dur + 0.05);
+    }
+    function scheduleLoop(){
+      if(!playing) return;
+      const now = actx.currentTime;
+      const freq = SCALE[Math.floor(Math.random()*SCALE.length)];
+      note(freq, now, 1.3, 0.26);
+      if(step % 4 === 0) note(SCALE[0]/2, now, 2.4, 0.16);
+      step++;
+      timer = setTimeout(scheduleLoop, 720);
+    }
+    function start(){
+      ensure();
+      if(actx.state === 'suspended') actx.resume();
+      if(playing) return;
+      playing = true;
+      scheduleLoop();
+    }
+    function toggleMute(){
+      ensure();
+      muted = !muted;
+      master.gain.value = muted ? 0 : 0.7;
+      return muted;
+    }
+    return { start, toggleMute };
+  })();
+
+  const musicBtn = document.getElementById('musicToggle');
+  musicBtn.addEventListener('click', () => {
+    const isMuted = gardenMusic.toggleMute();
+    musicBtn.textContent = isMuted ? '🔇' : '🔊';
+  });
+
+  const RIVAL_WPM = 42;
+
+  const SENTENCES = [
+    "The fox trims the hedges while the bunny counts the carrots twice.",
+    "Warm sunlight spills across the garden path every quiet morning.",
+    "Nine little stalls line the path, each one tended with care.",
+    "The bear stacks crates of acorns beside the old wooden gate.",
+    "A gentle breeze carries petals over the freshly turned soil.",
+    "Deer and cat race down the row, chasing the last ripe berry.",
+    "Chicks peck softly near the fence while the garden wakes up.",
+    "Every stall in the garden hides a small and playful contest.",
+    "The bunny hops between the rows, checking each planted seed.",
+    "Cool dew settles on the leaves before the sun climbs higher.",
+  ];
+
+  let target = '';
+  let typed = '';
+  let startTime = null;
+  let finished = false;
+
+  bestEl.textContent = 0;
+
+  function pickSentence(){
+    return SENTENCES[Math.floor(Math.random()*SENTENCES.length)];
+  }
+
+  function renderPrompt(){
+    promptEl.innerHTML = '';
+    for(let i=0;i<target.length;i++){
+      const span = document.createElement('span');
+      span.textContent = target[i];
+      if(i < typed.length){
+        span.className = typed[i] === target[i] ? 'char-correct' : 'char-incorrect';
+      } else if(i === typed.length){
+        span.className = 'char-pending char-cursor';
+      } else {
+        span.className = 'char-pending';
+      }
+      promptEl.appendChild(span);
+    }
+  }
+
+  function updateStats(){
+    if(!startTime){ wpmEl.textContent = 0; accEl.textContent = '100%'; return; }
+    const elapsedMin = (Date.now() - startTime) / 60000;
+    const wordsTyped = typed.length / 5;
+    const wpm = elapsedMin > 0 ? Math.round(wordsTyped / elapsedMin) : 0;
+    wpmEl.textContent = wpm;
+
+    let correct = 0;
+    for(let i=0;i<typed.length;i++){
+      if(typed[i] === target[i]) correct++;
+    }
+    const acc = typed.length > 0 ? Math.round((correct/typed.length)*100) : 100;
+    accEl.textContent = acc + '%';
+  }
+
+  input.addEventListener('input', () => {
+    if(finished) return;
+    if(!startTime) startTime = Date.now();
+    typed = input.value;
+    if(typed.length > target.length) typed = typed.slice(0, target.length);
+    renderPrompt();
+    updateStats();
+    if(typed.length === target.length){
+      finish();
+    }
+  });
+
+  function finish(){
+    finished = true;
+    const elapsedMin = (Date.now() - startTime) / 60000;
+    const wordsTyped = target.length / 5;
+    const finalWpm = elapsedMin > 0 ? Math.round(wordsTyped / elapsedMin) : 0;
+    let correct = 0;
+    for(let i=0;i<target.length;i++) if(typed[i]===target[i]) correct++;
+    const finalAcc = Math.round((correct/target.length)*100);
+
+    const best = parseInt(bestEl.textContent) || 0;
+    if(finalWpm > best) bestEl.textContent = finalWpm;
+
+    const beatRival = finalWpm > RIVAL_WPM;
+
+    overlay.innerHTML = `
+      <h2>${beatRival ? "Deer wins the row! 🎉" : "Cat keeps the crown 🐱"}</h2>
+      <div class="results-row">
+        <div class="rival">Your pace: <strong>${finalWpm} WPM</strong></div>
+        <div class="rival">Accuracy: <strong>${finalAcc}%</strong></div>
+      </div>
+      <p>${beatRival ? "Faster than Cat's best run — nicely typed!" : "Cat's pace of " + RIVAL_WPM + " WPM still stands. Give it another go."}</p>
+      <button class="btn" id="startBtn2">TYPE AGAIN ►</button>
+    `;
+    overlay.style.display = 'flex';
+    document.getElementById('startBtn2').addEventListener('click', startGame);
+  }
+
+  function startGame(){
+    target = pickSentence();
+    typed = '';
+    startTime = null;
+    finished = false;
+    input.value = '';
+    wpmEl.textContent = 0;
+    accEl.textContent = '100%';
+    renderPrompt();
+    overlay.style.display = 'none';
+    setTimeout(() => input.focus(), 50);
+  }
+
+  boardWrap.addEventListener('click', () => {
+    if(!finished) input.focus();
+  });
+
+  startBtn.addEventListener('click', () => { gardenMusic.start(); startGame(); });
+
+  // initial static preview before first start
+  target = pickSentence();
+  renderPrompt();
+})();
+</script>
+
+</body>
+</html>

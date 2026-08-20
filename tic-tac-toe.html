@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tic-Tac-Toe · Game Garden</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --green-deep:#7FA83E;
+    --green-light:#C7DE6E;
+    --pink:#F2897E;
+    --pink-pale:#FBD9CE;
+    --cream:#F7DFA0;
+    --lavender:#C6AEE0;
+    --paper:#FFFDF6;
+    --ink:#5B4A32;
+    --ink-soft:#8A7A5C;
+    --white:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 1px 1px, rgba(165,200,88,0.18) 1px, transparent 0) 0 0/26px 26px,
+      var(--paper);
+    font-family:'Nunito', sans-serif;
+    color:var(--ink);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+
+  .topbar{
+    width:100%;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:20px 6vw 0;
+    max-width:640px;
+  }
+  .back{
+    font-family:'Press Start 2P', monospace;
+    font-size:9px;
+    text-decoration:none;
+    color:var(--ink);
+    background:var(--white);
+    border:2px solid var(--ink);
+    padding:9px 12px;
+    border-radius:8px;
+    box-shadow:2px 2px 0 rgba(91,74,50,0.2);
+  }
+  .brand{
+    font-family:'Press Start 2P', monospace;
+    font-size:11px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .brand-dot{ width:12px;height:12px;background:var(--pink); border:2px solid var(--ink); }
+
+  .sound-btn{
+    font-size:16px;
+    background:var(--white);
+    border:2px solid var(--ink);
+    border-radius:10px;
+    width:38px; height:38px;
+    cursor:pointer;
+    box-shadow:2px 2px 0 rgba(91,74,50,0.2);
+    transition:transform .1s ease;
+  }
+  .sound-btn:hover{ transform:translateY(-2px); }
+  .sound-btn.muted{ opacity:.55; }
+
+  .hero{
+    text-align:center;
+    padding:22px 6vw 6px;
+  }
+  .hero-tag{
+    display:inline-block;
+    font-family:'Press Start 2P', monospace;
+    font-size:9px;
+    background:var(--green-light);
+    border:2px solid var(--ink);
+    padding:6px 12px;
+    border-radius:8px;
+    margin-bottom:12px;
+    box-shadow:3px 3px 0 rgba(91,74,50,0.2);
+  }
+  .hero h1{
+    font-family:'Fredoka', sans-serif;
+    font-weight:700;
+    font-size:clamp(28px, 6vw, 42px);
+    margin:0 0 6px;
+  }
+  .hero h1 span{ color:var(--pink); -webkit-text-stroke:1px var(--ink); text-shadow:2px 2px 0 var(--green-light); }
+
+  /* difficulty selector */
+  .difficulty{
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    margin-top:16px;
+  }
+  .difficulty-label{
+    font-family:'Press Start 2P', monospace;
+    font-size:9px;
+    color:var(--ink-soft);
+    letter-spacing:1px;
+  }
+  .diff-options{
+    display:flex; gap:8px;
+    background:var(--white);
+    border:2.5px solid var(--ink);
+    border-radius:12px;
+    padding:5px;
+    box-shadow:3px 3px 0 rgba(91,74,50,0.15);
+  }
+  .diff-btn{
+    font-family:'Fredoka', sans-serif;
+    font-weight:600;
+    font-size:13px;
+    border:none;
+    background:transparent;
+    color:var(--ink-soft);
+    padding:8px 16px;
+    border-radius:8px;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .diff-btn:hover{ background:var(--pink-pale); }
+  .diff-btn.active{
+    background:var(--green-deep);
+    color:var(--paper);
+  }
+
+  /* scoreboard with the two characters */
+  .scoreboard{
+    display:flex; align-items:center; justify-content:center; gap:22px;
+    margin:10px 0 4px;
+  }
+  .player{
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+    padding:10px 16px;
+    background:var(--white);
+    border:3px solid var(--ink);
+    border-radius:16px;
+    box-shadow:4px 4px 0 rgba(91,74,50,0.15);
+    min-width:96px;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .player.active{
+    transform:translateY(-4px);
+    box-shadow:6px 6px 0 rgba(91,74,50,0.22);
+    border-color: var(--green-deep);
+  }
+  .player .name{ font-family:'Fredoka', sans-serif; font-weight:600; font-size:14px; }
+  .player .score{ font-family:'Press Start 2P', monospace; font-size:14px; color:var(--pink); }
+  .vs-mid{
+    font-family:'Press Start 2P', monospace;
+    font-size:11px;
+    color:var(--ink);
+    background:var(--lavender);
+    border:2px solid var(--ink);
+    border-radius:50%;
+    width:32px; height:32px;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  .status{
+    font-family:'Fredoka', sans-serif;
+    font-size:16px;
+    color:var(--ink-soft);
+    margin:8px 0 4px;
+    min-height:22px;
+    text-align:center;
+  }
+
+  /* board */
+  .board-wrap{
+    background:var(--white);
+    border:3px solid var(--ink);
+    border-radius:22px;
+    box-shadow:0 10px 0 rgba(91,74,50,0.12);
+    padding:16px;
+    margin:14px 0 10px;
+  }
+  .board{
+    display:grid;
+    grid-template-columns:repeat(3, minmax(72px, 96px));
+    grid-template-rows:repeat(3, minmax(72px, 96px));
+    gap:10px;
+  }
+  .cell{
+    background:var(--cream);
+    border:3px solid var(--ink);
+    border-radius:14px;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    position:relative;
+    transition:background .12s ease, transform .1s ease;
+  }
+  .cell:hover:not(.filled){ background:var(--pink-pale); transform:scale(1.03); }
+  .cell.filled{ cursor:default; }
+
+  .mark{ width:70%; height:70%; }
+
+  /* Fox mark (X token) */
+  .mark.fox-mark{ position:relative; }
+  .mark.fox-mark .f-head{
+    position:absolute; left:50%; top:8%; transform:translateX(-50%);
+    width:70%; height:60%;
+    background:#F0A560; border:2.5px solid var(--ink); border-radius:14px;
+  }
+  .mark.fox-mark .f-ear{ position:absolute; top:-6%; width:26%; height:34%; background:#F0A560; border:2.5px solid var(--ink); }
+  .mark.fox-mark .f-ear.l{ left:2%; border-radius:70% 30% 0 30%; }
+  .mark.fox-mark .f-ear.r{ right:2%; border-radius:30% 70% 30% 0; }
+  .mark.fox-mark .f-eye{ position:absolute; top:38%; width:8%; height:10%; background:var(--ink); border-radius:1px; }
+  .mark.fox-mark .f-eye.l{ left:26%; } .mark.fox-mark .f-eye.r{ right:26%; }
+  .mark.fox-mark .f-muzzle{ position:absolute; left:50%; top:46%; transform:translateX(-50%); width:24%; height:16%; background:#FBD9CE; border:2px solid var(--ink); border-top:none; border-radius:0 0 8px 8px; }
+
+  /* Bunny mark (O token) */
+  .mark.bunny-mark{ position:relative; }
+  .mark.bunny-mark .b-head{
+    position:absolute; left:50%; top:14%; transform:translateX(-50%);
+    width:66%; height:56%;
+    background:#F7D8D3; border:2.5px solid var(--ink); border-radius:50%;
+  }
+  .mark.bunny-mark .b-ear{ position:absolute; top:-24%; width:16%; height:44%; background:#F7D8D3; border:2.5px solid var(--ink); border-radius:60%; }
+  .mark.bunny-mark .b-ear.l{ left:22%; } .mark.bunny-mark .b-ear.r{ right:22%; }
+  .mark.bunny-mark .b-eye{ position:absolute; top:36%; width:8%; height:10%; background:var(--ink); border-radius:50%; }
+  .mark.bunny-mark .b-eye.l{ left:32%; } .mark.bunny-mark .b-eye.r{ right:32%; }
+  .mark.bunny-mark .b-blush{ position:absolute; top:46%; width:10%; height:6%; background:var(--pink); border-radius:50%; opacity:.8; }
+  .mark.bunny-mark .b-blush.l{ left:20%; } .mark.bunny-mark .b-blush.r{ right:20%; }
+
+  .cell.win{ background:var(--green-light) !important; animation:pulse .5s ease infinite alternate; }
+  @keyframes pulse{ from{ transform:scale(1); } to{ transform:scale(1.05); } }
+
+  .pop-in{ animation:popIn .22s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes popIn{ from{ transform:scale(.3) rotate(-8deg); opacity:0; } to{ transform:scale(1) rotate(0deg); opacity:1; } }
+
+  .controls{
+    display:flex; gap:12px; margin:10px 0 40px;
+  }
+  .btn{
+    font-family:'Press Start 2P', monospace;
+    font-size:10px;
+    border:2px solid var(--ink);
+    border-radius:10px;
+    padding:11px 16px;
+    cursor:pointer;
+    background:var(--white);
+    box-shadow:3px 3px 0 rgba(91,74,50,0.2);
+    transition:transform .1s ease;
+    color:var(--ink);
+  }
+  .btn:hover{ transform:translateY(-2px); }
+  .btn.primary{ background:var(--green-deep); color:var(--paper); }
+
+  .result-overlay{
+    position:fixed; inset:0;
+    background:rgba(91,74,50,0.35);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none;
+    transition:opacity .2s ease;
+    z-index:10;
+    padding:20px;
+  }
+  .result-overlay.show{ opacity:1; pointer-events:auto; }
+  .result-card{
+    background:var(--white);
+    border:3px solid var(--ink);
+    border-radius:22px;
+    box-shadow:0 12px 0 rgba(91,74,50,0.25);
+    padding:32px 36px;
+    text-align:center;
+    max-width:320px;
+    transform:scale(.8);
+    transition:transform .2s cubic-bezier(.34,1.56,.64,1);
+  }
+  .result-overlay.show .result-card{ transform:scale(1); }
+  .result-emoji{ font-size:48px; margin-bottom:8px; }
+  .result-title{
+    font-family:'Fredoka', sans-serif;
+    font-weight:700;
+    font-size:22px;
+    margin-bottom:18px;
+  }
+
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="back" href="game-garden-homepage.html">◄ GARDEN</a>
+    <div class="brand"><span class="brand-dot"></span>STALL 01</div>
+    <button class="sound-btn" id="soundBtn" title="Toggle music">🔈</button>
+  </div>
+
+  <div class="hero">
+    <span class="hero-tag">★ FOX VS BUNNY ★</span>
+    <h1>Tic-Tac-<span>Toe</span></h1>
+  </div>
+
+  <div class="difficulty">
+    <span class="difficulty-label">DIFFICULTY</span>
+    <div class="diff-options">
+      <button class="diff-btn" data-level="easy">Easy</button>
+      <button class="diff-btn active" data-level="medium">Medium</button>
+      <button class="diff-btn" data-level="hard">Hard</button>
+    </div>
+  </div>
+
+  <div class="scoreboard">
+    <div class="player" id="p-fox">
+      <div class="name">🦊 Fox (You)</div>
+      <div class="score" id="score-fox">0</div>
+    </div>
+    <div class="vs-mid">VS</div>
+    <div class="player" id="p-bunny">
+      <div class="name">🐰 Bunny</div>
+      <div class="score" id="score-bunny">0</div>
+    </div>
+  </div>
+
+  <div class="status" id="status">Your move — tap a plot!</div>
+
+  <div class="board-wrap">
+    <div class="board" id="board"></div>
+  </div>
+
+  <div class="controls">
+    <button class="btn primary" id="restart">↻ NEW ROUND</button>
+  </div>
+
+  <div class="result-overlay" id="resultOverlay">
+    <div class="result-card">
+      <div class="result-emoji" id="resultEmoji">🎉</div>
+      <div class="result-title" id="resultTitle">Fox wins!</div>
+      <button class="btn primary" id="playAgainBtn">↻ PLAY AGAIN</button>
+    </div>
+  </div>
+
+<script>
+  const HUMAN = 'fox';
+  const AI = 'bunny';
+  let board = Array(9).fill(null);
+  let gameOver = false;
+  let scores = { fox: 0, bunny: 0 };
+  let difficulty = 'medium';
+
+  /* ---------- tiny chiptune audio engine (no external files) ---------- */
+  let audioCtx = null;
+  let musicOn = false;
+  let musicTimer = null;
+  let noteIndex = 0;
+
+  const MELODY = [523.25, 659.25, 783.99, 659.25, 587.33, 783.99, 880.00, 783.99,
+                  659.25, 523.25, 587.33, 659.25, 523.25, 493.88, 587.33, 523.25];
+
+  function ensureAudio(){
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  }
+
+  function playTone(freq, duration, type, gainVal){
+    if (!audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type || 'square';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(gainVal || 0.05, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  }
+
+  function musicStep(){
+    if (!musicOn) return;
+    const freq = MELODY[noteIndex % MELODY.length];
+    playTone(freq, 0.22, 'square', 0.035);
+    // soft bass every other note
+    if (noteIndex % 2 === 0) playTone(freq / 4, 0.3, 'triangle', 0.03);
+    noteIndex++;
+    musicTimer = setTimeout(musicStep, 260);
+  }
+
+  function startMusic(){
+    ensureAudio();
+    musicOn = true;
+    noteIndex = 0;
+    musicStep();
+    soundBtn.textContent = '🔊';
+    soundBtn.classList.remove('muted');
+  }
+  function stopMusic(){
+    musicOn = false;
+    clearTimeout(musicTimer);
+    soundBtn.textContent = '🔈';
+    soundBtn.classList.add('muted');
+  }
+
+  const soundBtn = document.getElementById('soundBtn');
+  soundBtn.classList.add('muted');
+  soundBtn.addEventListener('click', () => {
+    ensureAudio();
+    if (musicOn) stopMusic(); else startMusic();
+  });
+
+  function sfxMove(player){
+    ensureAudio();
+    playTone(player === HUMAN ? 440 : 349.23, 0.12, 'square', 0.06);
+  }
+  function sfxWin(){
+    ensureAudio();
+    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+      setTimeout(() => playTone(f, 0.25, 'square', 0.07), i * 110);
+    });
+  }
+  function sfxDraw(){
+    ensureAudio();
+    [392, 349.23].forEach((f, i) => {
+      setTimeout(() => playTone(f, 0.3, 'triangle', 0.06), i * 150);
+    });
+  }
+  /* ---------------------------------------------------------------- */
+
+  const diffButtons = document.querySelectorAll('.diff-btn');
+  diffButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      diffButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      difficulty = btn.dataset.level;
+      newRound();
+    });
+  });
+
+  const boardEl = document.getElementById('board');
+  const statusEl = document.getElementById('status');
+  const scoreFoxEl = document.getElementById('score-fox');
+  const scoreBunnyEl = document.getElementById('score-bunny');
+  const playerFoxEl = document.getElementById('p-fox');
+  const playerBunnyEl = document.getElementById('p-bunny');
+
+  const WIN_LINES = [
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
+  ];
+
+  function foxMarkHTML(){
+    return `<div class="f-ear l"></div><div class="f-ear r"></div><div class="f-head"></div><div class="f-eye l"></div><div class="f-eye r"></div><div class="f-muzzle"></div>`;
+  }
+  function bunnyMarkHTML(){
+    return `<div class="b-ear l"></div><div class="b-ear r"></div><div class="b-head"></div><div class="b-eye l"></div><div class="b-eye r"></div><div class="b-blush l"></div><div class="b-blush r"></div>`;
+  }
+
+  function renderBoard(){
+    boardEl.innerHTML = '';
+    board.forEach((val, i) => {
+      const cell = document.createElement('div');
+      cell.className = 'cell' + (val ? ' filled' : '');
+      cell.dataset.index = i;
+      if (val === 'fox') cell.innerHTML = `<div class="mark fox-mark pop-in">${foxMarkHTML()}</div>`;
+      if (val === 'bunny') cell.innerHTML = `<div class="mark bunny-mark pop-in">${bunnyMarkHTML()}</div>`;
+      cell.addEventListener('click', () => onCellClick(i));
+      boardEl.appendChild(cell);
+    });
+  }
+
+  function checkWinner(b){
+    for (const line of WIN_LINES){
+      const [a,c,d] = line;
+      if (b[a] && b[a] === b[c] && b[a] === b[d]) return { winner: b[a], line };
+    }
+    if (b.every(v => v)) return { winner: 'draw', line: null };
+    return null;
+  }
+
+  function setActive(turn){
+    playerFoxEl.classList.toggle('active', turn === 'fox' && !gameOver);
+    playerBunnyEl.classList.toggle('active', turn === 'bunny' && !gameOver);
+  }
+
+  function onCellClick(i){
+    if (gameOver || board[i]) return;
+    board[i] = HUMAN;
+    sfxMove(HUMAN);
+    renderBoard();
+    const result = checkWinner(board);
+    if (result){ return endRound(result); }
+    setActive(AI);
+    statusEl.textContent = "Bunny is thinking...";
+    setTimeout(aiMove, 500);
+  }
+
+  function aiMove(){
+    if (gameOver) return;
+    const move = bestMove(board);
+    board[move] = AI;
+    sfxMove(AI);
+    renderBoard();
+    const result = checkWinner(board);
+    if (result){ return endRound(result); }
+    setActive(HUMAN);
+    statusEl.textContent = "Your move — tap a plot!";
+  }
+
+  // difficulty-aware bunny AI
+  function bestMove(b){
+    const empty = b.map((v,i) => v === null ? i : null).filter(v => v !== null);
+
+    // always take an immediate win if it's sitting right there, at any difficulty
+    const winNow = findWinningMove(b, AI);
+    if (winNow !== null) return winNow;
+
+    if (difficulty === 'easy'){
+      // mostly random, rarely blocks, almost never plays optimally
+      if (Math.random() < 0.85){
+        return empty[Math.floor(Math.random() * empty.length)];
+      }
+      const blockNow = findWinningMove(b, HUMAN);
+      if (blockNow !== null) return blockNow;
+      return empty[Math.floor(Math.random() * empty.length)];
+    }
+
+    if (difficulty === 'medium'){
+      if (Math.random() < 0.5){
+        return empty[Math.floor(Math.random() * empty.length)];
+      }
+      const blockNow = findWinningMove(b, HUMAN);
+      if (blockNow !== null && Math.random() < 0.75) return blockNow;
+      if (Math.random() < 0.35) return optimalMove(b, empty);
+      return empty[Math.floor(Math.random() * empty.length)];
+    }
+
+    // hard: always block, mostly optimal, tiny bit of randomness
+    const blockNow = findWinningMove(b, HUMAN);
+    if (blockNow !== null) return blockNow;
+    if (Math.random() < 0.15){
+      return empty[Math.floor(Math.random() * empty.length)];
+    }
+    return optimalMove(b, empty);
+  }
+
+  function optimalMove(b, empty){
+    let bestScore = -Infinity;
+    let move = empty[0];
+    for (const i of empty){
+      b[i] = AI;
+      const score = minimax(b, 0, false);
+      b[i] = null;
+      if (score > bestScore){ bestScore = score; move = i; }
+    }
+    return move;
+  }
+
+  function findWinningMove(b, player){
+    const empty = b.map((v,i) => v === null ? i : null).filter(v => v !== null);
+    for (const i of empty){
+      b[i] = player;
+      const result = checkWinner(b);
+      b[i] = null;
+      if (result && result.winner === player) return i;
+    }
+    return null;
+  }
+
+  function minimax(b, depth, isMaximizing){
+    const result = checkWinner(b);
+    if (result){
+      if (result.winner === AI) return 10 - depth;
+      if (result.winner === HUMAN) return depth - 10;
+      return 0;
+    }
+    const empty = b.map((v,i) => v === null ? i : null).filter(v => v !== null);
+    if (isMaximizing){
+      let best = -Infinity;
+      for (const i of empty){
+        b[i] = AI;
+        best = Math.max(best, minimax(b, depth+1, false));
+        b[i] = null;
+      }
+      return best;
+    } else {
+      let best = Infinity;
+      for (const i of empty){
+        b[i] = HUMAN;
+        best = Math.min(best, minimax(b, depth+1, true));
+        b[i] = null;
+      }
+      return best;
+    }
+  }
+
+  const resultOverlay = document.getElementById('resultOverlay');
+  const resultEmoji = document.getElementById('resultEmoji');
+  const resultTitle = document.getElementById('resultTitle');
+
+  function showResult(emoji, title){
+    resultEmoji.textContent = emoji;
+    resultTitle.textContent = title;
+    resultOverlay.classList.add('show');
+  }
+  function hideResult(){
+    resultOverlay.classList.remove('show');
+  }
+
+  function endRound(result){
+    gameOver = true;
+    setActive(null);
+    if (result.winner === 'draw'){
+      statusEl.textContent = "It's a draw — the garden stays peaceful.";
+      showResult('🤝', "It's a draw!");
+      sfxDraw();
+    } else {
+      if (result.line){
+        result.line.forEach(i => {
+          boardEl.children[i].classList.add('win');
+        });
+      }
+      if (result.winner === HUMAN){
+        scores.fox++;
+        statusEl.textContent = "🦊 Fox wins the round!";
+        showResult('🎉', '🦊 Fox wins!');
+      } else {
+        scores.bunny++;
+        statusEl.textContent = "🐰 Bunny wins the round!";
+        showResult('🥕', '🐰 Bunny wins!');
+      }
+      sfxWin();
+      scoreFoxEl.textContent = scores.fox;
+      scoreBunnyEl.textContent = scores.bunny;
+    }
+  }
+
+  function newRound(){
+    board = Array(9).fill(null);
+    gameOver = false;
+    hideResult();
+    renderBoard();
+    setActive(HUMAN);
+    statusEl.textContent = "Your move — tap a plot!";
+  }
+
+  document.getElementById('restart').addEventListener('click', newRound);
+  document.getElementById('playAgainBtn').addEventListener('click', newRound);
+
+  renderBoard();
+  setActive(HUMAN);
+</script>
+
+</body>
+</html>

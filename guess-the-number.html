@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guess the Number · Game Garden</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#5F4550;
+    --ink-soft:#B69CA5;
+    --paper:#FFFDF8;
+    --white:#ffffff;
+    --palepink:#FFE6EF;
+    --pink:#FFB8CC;
+    --mauve:#C295B0;
+    --sage:#ABE8B4;
+    --palesage:#E6F9E8;
+    --good:#8FCB4E;
+    --bad:#F4867C;
+    --shadow: 0 10px 0 rgba(194,149,176,0.2);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh;
+    background:
+      radial-gradient(circle at 1px 1px, rgba(171,232,180,0.28) 1px, transparent 0) 0 0/26px 26px,
+      var(--paper);
+    font-family:'Nunito', sans-serif; color:var(--ink); -webkit-font-smoothing:antialiased;
+  }
+  a{ text-decoration:none; }
+  .topbar{ display:flex; align-items:center; justify-content:space-between; padding:22px 6vw 0; }
+  .brand{ display:flex; align-items:center; gap:10px; font-family:'Press Start 2P', monospace; font-size:12px; color:var(--ink); }
+  .brand-dot{ width:14px;height:14px;background:var(--mauve); border:2px solid var(--ink); box-shadow:3px 3px 0 rgba(95,74,72,0.25); }
+  .back{ font-family:'Press Start 2P', monospace; font-size:9px; background:var(--white); border:2px solid var(--ink); border-radius:999px; padding:8px 14px; color:var(--ink); box-shadow:2px 2px 0 rgba(95,74,72,0.18); }
+  .sound-toggle{ font-family:'Press Start 2P', monospace; font-size:9px; background:var(--palesage); border:2px solid var(--ink); border-radius:999px; padding:8px 14px; color:var(--ink); box-shadow:2px 2px 0 rgba(95,74,72,0.18); cursor:pointer; }
+  .topright{ display:flex; gap:10px; }
+
+  .hero{ padding:26px 6vw 6px; text-align:center; }
+  .hero-tag{ display:inline-block; font-family:'Press Start 2P', monospace; font-size:9px; background:var(--sage); border:2px solid var(--ink); padding:6px 12px; border-radius:8px; margin-bottom:12px; box-shadow:3px 3px 0 rgba(95,74,72,0.2); }
+  .hero h1{ font-family:'Fredoka', sans-serif; font-weight:700; font-size:clamp(30px, 6vw, 46px); margin:0; }
+  .hero h1 span{ color:var(--mauve); -webkit-text-stroke:1.2px var(--ink); text-shadow:3px 3px 0 var(--sage); }
+
+  .arena{ max-width:640px; margin: 22px auto 60px; padding:0 6vw; }
+  .stage-card{ background:var(--white); border:3px solid var(--ink); border-radius:20px; box-shadow:var(--shadow); overflow:hidden; }
+  .awning{ height:30px; background: repeating-linear-gradient(90deg, var(--pink) 0 18px, var(--palepink) 18px 36px); border-bottom:3px solid var(--ink); }
+  .stage{ display:flex; align-items:flex-end; justify-content:center; gap:24px; background:var(--palesage); padding:18px 10px 10px; position:relative; }
+  .vs{ font-family:'Press Start 2P', monospace; font-size:10px; color:var(--ink); background:var(--white); border:2px solid var(--ink); border-radius:50%; width:26px; height:26px; display:flex; align-items:center; justify-content:center; margin-bottom:16px; }
+
+  .char{ width:56px; height:64px; position:relative; filter:drop-shadow(2px 3px 0 rgba(95,74,72,0.25)); transition:transform .18s; }
+  .char .head{ position:absolute; left:50%; top:14px; transform:translateX(-50%); width:44px; height:40px; background:var(--fur,#E8C79A); border:2.5px solid var(--ink); border-radius:14px; }
+  .char .ear{ position:absolute; top:2px; width:16px; height:20px; background:var(--fur,#E8C79A); border:2.5px solid var(--ink); }
+  .char .ear.l{ left:2px; border-radius:60% 40% 0 40%; } .char .ear.r{ right:2px; border-radius:40% 60% 40% 0; }
+  .char .eye{ position:absolute; top:32px; width:5px; height:6px; background:var(--ink); border-radius:1px; }
+  .char .eye.l{ left:16px; } .char .eye.r{ right:16px; }
+  .char .blush{ position:absolute; top:40px; width:7px; height:4px; background:var(--pink); border-radius:50%; opacity:.8; }
+  .char .blush.l{ left:10px; } .char .blush.r{ right:10px; }
+  .char .muzzle{ position:absolute; left:50%; top:38px; transform:translateX(-50%); width:14px; height:9px; background:var(--fur-in,#F6E3C6); border-radius:0 0 8px 8px; border:2px solid var(--ink); border-top:none; }
+  .char .body{ position:absolute; left:50%; bottom:0; transform:translateX(-50%); width:34px; height:20px; background:var(--tunic,var(--pink)); border:2.5px solid var(--ink); border-radius:10px 10px 4px 4px; }
+  .deer{ --fur:#E3C79E; --fur-in:#F7DFA0; } .deer .ear{ width:10px; height:26px; top:-10px; border-radius:50% 50% 0 50%; }
+  .cat{ --fur:#F7EFD2; --fur-in:#F7DFA0; } .cat .ear{ clip-path: polygon(0 100%, 50% 0, 100% 100%); border-radius:0; }
+  .tunic-sage{ --tunic:var(--sage); } .tunic-pink{ --tunic:var(--pink); }
+  .char.think{ animation: tilt 1.4s ease-in-out infinite; }
+  .char.cheer{ animation: hop .5s ease; }
+  @keyframes tilt{ 0%,100%{transform:rotate(0deg);} 50%{transform:rotate(5deg) translateY(-2px);} }
+  @keyframes hop{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(-14px);} }
+
+  .playbox{ padding:22px 26px 30px; text-align:center; }
+  .rules{ color:var(--ink-soft); font-size:14px; margin:0 0 16px; line-height:1.5; }
+  .rules b{ color:var(--ink); }
+  .range-track{
+    position:relative; height:14px; background:var(--palepink); border:2.5px solid var(--ink);
+    border-radius:999px; margin:0 auto 20px; max-width:420px; overflow:hidden;
+  }
+  .range-fill{ position:absolute; left:0; top:0; bottom:0; background:var(--sage); width:100%; }
+  .range-labels{ display:flex; justify-content:space-between; max-width:420px; margin:0 auto 14px; font-family:'Press Start 2P', monospace; font-size:9px; color:var(--ink-soft); }
+
+  .guessRow{ display:flex; gap:10px; justify-content:center; align-items:center; margin-bottom:14px; }
+  .guessRow input{
+    width:100px; font-family:'Fredoka', sans-serif; font-size:22px; text-align:center;
+    border:2.5px solid var(--ink); border-radius:10px; padding:10px 8px; background:var(--paper); color:var(--ink);
+  }
+  .btn{ font-family:'Press Start 2P', monospace; font-size:10px; color:var(--ink); background:var(--pink); border:2.5px solid var(--ink); border-radius:10px; padding:12px 18px; cursor:pointer; box-shadow:3px 3px 0 rgba(95,74,72,0.3); }
+  .btn:hover{ transform:translateY(-2px); } .btn:active{ transform:translateY(0); }
+  .btn:disabled{ opacity:.5; cursor:default; transform:none; }
+
+  .hint{ font-family:'Fredoka', sans-serif; font-size:19px; min-height:28px; margin:10px 0; }
+  .hint.hot{ color:var(--bad); } .hint.cold{ color:#5C87C7; } .hint.win{ color:var(--good); }
+
+  .attempts{ font-family:'Press Start 2P', monospace; font-size:9px; color:var(--ink-soft); margin-top:6px; }
+  .history{ display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin-top:14px; }
+  .chip{ font-family:'Nunito', sans-serif; font-weight:700; font-size:12px; background:var(--palesage); border:2px solid var(--ink); border-radius:999px; padding:4px 10px; }
+  .chip.hi{ background:#FFD9D2; } .chip.lo{ background:#D9E7FF; }
+
+  .hidden{ display:none !important; }
+  .final{ text-align:center; padding:30px 20px; }
+  .final h2{ font-family:'Fredoka', sans-serif; font-size:28px; margin:0 0 8px; }
+  .final p{ color:var(--ink-soft); margin:0 0 18px; }
+
+  .diffBox{ padding:28px 26px 32px; text-align:center; }
+  .diffBox p{ color:var(--ink-soft); margin:0 0 18px; }
+  .diffRow{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+  .diffBtn{
+    font-family:'Press Start 2P', monospace; font-size:10px; color:var(--ink);
+    background:var(--paper); border:2.5px solid var(--ink); border-radius:12px;
+    padding:14px 18px; cursor:pointer; box-shadow:3px 3px 0 rgba(95,74,72,0.2);
+    transition:transform .12s ease;
+  }
+  .diffBtn:hover{ transform:translateY(-3px); }
+  .diffBtn small{ display:block; font-family:'Nunito',sans-serif; font-weight:700; font-size:10px; color:var(--ink-soft); margin-top:6px; }
+  .diffBtn.easy{ background:var(--palesage); }
+  .diffBtn.medium{ background:var(--pink); }
+  .diffBtn.hard{ background:var(--mauve); color:var(--ink); }
+  .diffBtn.hard small{ color:#5F4550; }
+  .cur-diff{ font-family:'Press Start 2P', monospace; font-size:8px; color:var(--ink-soft); text-align:center; margin-top:6px; }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="back" href="index.html">◄ GARDEN</a>
+    <div class="brand"><span class="brand-dot"></span> STALL 09</div>
+    <div class="topright"></div>
+  </div>
+
+  <div class="hero">
+    <span class="hero-tag">★ DEER VS CAT ★</span>
+    <h1>Guess the <span>Number</span></h1>
+  </div>
+
+  <div class="arena">
+    <div class="stage-card">
+      <div class="awning"></div>
+      <div class="stage">
+        <div class="char deer think" id="charYou"><div class="ear l"></div><div class="ear r"></div><div class="head"></div><div class="eye l"></div><div class="eye r"></div><div class="muzzle"></div><div class="blush l"></div><div class="blush r"></div><div class="body tunic-pink"></div></div>
+        <div class="vs">VS</div>
+        <div class="char cat" id="charCpu"><div class="ear l"></div><div class="ear r"></div><div class="head"></div><div class="eye l"></div><div class="eye r"></div><div class="muzzle"></div><div class="blush l"></div><div class="blush r"></div><div class="body tunic-sage"></div></div>
+      </div>
+
+      <div class="cur-diff" id="curDiff"></div>
+
+      <div class="diffBox" id="diffBox">
+        <p>Pick a difficulty — this sets the range and par to beat.</p>
+        <div class="diffRow">
+          <button class="diffBtn easy" data-diff="easy">EASY<small>1–30, par 8</small></button>
+          <button class="diffBtn medium" data-diff="medium">MEDIUM<small>1–50, par 7</small></button>
+          <button class="diffBtn hard" data-diff="hard">HARD<small>1–100, par 6</small></button>
+        </div>
+      </div>
+
+      <div class="playbox hidden" id="playbox">
+        <p class="rules">Cat has picked a number between <b id="minShow">1</b> and <b id="maxShow">50</b>. Beat Deer's par of <b id="parShow">7</b> guesses to win the plot!</p>
+
+        <div class="range-labels"><span id="minLabel">1</span><span id="maxLabel">50</span></div>
+        <div class="range-track"><div class="range-fill" id="rangeFill"></div></div>
+
+        <div class="guessRow">
+          <input type="number" id="guessInput" min="1" max="50" placeholder="?" />
+          <button class="btn" id="guessBtn">GUESS</button>
+        </div>
+
+        <div class="hint" id="hint">Type a number and hit guess.</div>
+        <div class="attempts">ATTEMPTS: <span id="attemptCount">0</span> / PAR <span id="parCount"></span></div>
+        <div class="history" id="history"></div>
+      </div>
+
+      <div class="final hidden" id="finalBox">
+        <h2 id="finalTitle">You win!</h2>
+        <p id="finalSub"></p>
+        <button class="btn" id="restartBtn">PLAY AGAIN</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ---------- soft lofi ambient background music (inbuilt, no external file) ---------- */
+(function () {
+  const STORAGE_KEY = 'gg_sound';
+  let audioCtx = null;
+  let masterGain = null;
+  let soundOn = (localStorage.getItem(STORAGE_KEY) !== 'off');
+  let running = false;
+  let chordTimer = null;
+  let arpTimer = null;
+  let chordIdx = 0;
+  const listeners = [];
+
+  // Warm, dreamy lofi chord loop — Am7 / Fmaj7 / Cmaj7 / G6, low & soft.
+  const CHORDS = [
+    [220.00, 261.63, 329.63, 392.00],
+    [174.61, 220.00, 261.63, 349.23],
+    [130.81, 164.81, 196.00, 246.94],
+    [196.00, 246.94, 293.66, 349.23]
+  ];
+  const ARP_SCALE = [523.25, 587.33, 659.25, 783.99, 880.00, 987.77];
+  let chordDurMs = 5400; // one full chord's length; can be nudged by setMood()
+
+  function ctx() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      masterGain = audioCtx.createGain();
+      masterGain.gain.value = 0.0001;
+      masterGain.connect(audioCtx.destination);
+    }
+    return audioCtx;
+  }
+
+  function playPadNote(freq, startTime, durSec) {
+    const c = ctx();
+    const osc1 = c.createOscillator();
+    const osc2 = c.createOscillator();
+    osc1.type = 'sine';
+    osc2.type = 'triangle';
+    osc1.frequency.value = freq;
+    osc2.frequency.value = freq * 1.004; // gentle detune for warmth
+    const filter = c.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 1100;
+    const g = c.createGain();
+    const attack = Math.min(1.6, durSec * 0.3);
+    const release = Math.min(2.2, durSec * 0.35);
+    g.gain.setValueAtTime(0, startTime);
+    g.gain.linearRampToValueAtTime(0.05, startTime + attack);
+    g.gain.setValueAtTime(0.05, startTime + durSec - release);
+    g.gain.linearRampToValueAtTime(0, startTime + durSec);
+    osc1.connect(filter);
+    osc2.connect(filter);
+    filter.connect(g);
+    g.connect(masterGain);
+    osc1.start(startTime);
+    osc2.start(startTime);
+    osc1.stop(startTime + durSec + 0.1);
+    osc2.stop(startTime + durSec + 0.1);
+  }
+
+  function scheduleChord() {
+    if (!soundOn) return;
+    const c = ctx();
+    const chord = CHORDS[chordIdx % CHORDS.length];
+    const now = c.currentTime;
+    const durSec = (chordDurMs + 900) / 1000; // slight overlap for a smooth crossfade
+    chord.forEach(freq => playPadNote(freq, now, durSec));
+    chordIdx++;
+    chordTimer = setTimeout(scheduleChord, chordDurMs);
+  }
+
+  function playArpNote() {
+    if (!soundOn) return;
+    const c = ctx();
+    const freq = ARP_SCALE[Math.floor(Math.random() * ARP_SCALE.length)];
+    const t0 = c.currentTime;
+    const osc = c.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    const g = c.createGain();
+    g.gain.setValueAtTime(0, t0);
+    g.gain.linearRampToValueAtTime(0.03, t0 + 0.06);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.9);
+    osc.connect(g);
+    g.connect(masterGain);
+    osc.start(t0);
+    osc.stop(t0 + 2.0);
+  }
+
+  function scheduleArp() {
+    if (!soundOn) return;
+    if (Math.random() < 0.55) playArpNote(); // sparse sparkle, not constant
+    arpTimer = setTimeout(scheduleArp, 1500 + Math.random() * 2000);
+  }
+
+  function startMusic() {
+    if (running || !soundOn) return;
+    running = true;
+    const c = ctx();
+    if (c.state === 'suspended') c.resume();
+    masterGain.gain.cancelScheduledValues(c.currentTime);
+    masterGain.gain.setValueAtTime(masterGain.gain.value, c.currentTime);
+    masterGain.gain.linearRampToValueAtTime(1, c.currentTime + 1.5);
+    scheduleChord();
+    scheduleArp();
+  }
+
+  function stopMusic() {
+    running = false;
+    if (chordTimer) clearTimeout(chordTimer);
+    if (arpTimer) clearTimeout(arpTimer);
+    if (masterGain) {
+      const c = ctx();
+      masterGain.gain.cancelScheduledValues(c.currentTime);
+      masterGain.gain.setValueAtTime(masterGain.gain.value, c.currentTime);
+      masterGain.gain.linearRampToValueAtTime(0.0001, c.currentTime + 0.7);
+    }
+  }
+
+  function ensurePlaying() {
+    if (!soundOn) return;
+    const c = ctx();
+    if (c.state === 'suspended') c.resume();
+    if (!running) startMusic();
+  }
+
+  function setSoundOn(on) {
+    soundOn = on;
+    localStorage.setItem(STORAGE_KEY, soundOn ? 'on' : 'off');
+    if (soundOn) ensurePlaying(); else stopMusic();
+    listeners.forEach(cb => { try { cb(soundOn); } catch (e) {} });
+    updateButton();
+  }
+
+  // Lets an individual game gently vary the pace by difficulty, optional.
+  function setMood(level) {
+    if (level === 'easy') chordDurMs = 6400;
+    else if (level === 'hard') chordDurMs = 4200;
+    else chordDurMs = 5400;
+  }
+
+  let btnEl = null;
+  function updateButton() {
+    if (btnEl) btnEl.textContent = soundOn ? '\uD83D\uDD0A' : '\uD83D\uDD07';
+  }
+  function injectButton() {
+    btnEl = document.createElement('button');
+    btnEl.id = 'ggSpeakerBtn';
+    btnEl.type = 'button';
+    btnEl.setAttribute('aria-label', 'Toggle background music');
+    btnEl.style.cssText = [
+      'position:fixed', 'top:18px', 'right:18px', 'z-index:9999',
+      'width:44px', 'height:44px', 'border-radius:50%',
+      'background:#FFFDF8', 'border:2.5px solid #3B2A22',
+      'box-shadow:3px 3px 0 rgba(0,0,0,0.18)',
+      'display:flex', 'align-items:center', 'justify-content:center',
+      'font-size:18px', 'line-height:1', 'cursor:pointer', 'padding:0'
+    ].join(';');
+    updateButton();
+    btnEl.addEventListener('click', function (e) {
+      e.stopPropagation();
+      setSoundOn(!soundOn);
+    });
+    document.body.appendChild(btnEl);
+  }
+
+  function init() {
+    injectButton();
+    ensurePlaying(); // works immediately once the browser trusts this site enough to autoplay
+    document.addEventListener('click', ensurePlaying); // otherwise, the first tap anywhere starts it
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  window.GG = {
+    isSoundOn: () => soundOn,
+    setSoundOn,
+    setMood,
+    onToggle: (cb) => listeners.push(cb)
+  };
+})();
+</script>
+<script>
+/* ---------- click / result sound effects (separate from the ambient bgm.js music) ---------- */
+let audioCtx = null;
+function soundOn(){ return window.GG ? window.GG.isSoundOn() : true; }
+function ctx(){ if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); return audioCtx; }
+function tone(freq, dur, type='sine', vol=0.18, delay=0){
+  if(!soundOn()) return;
+  const c = ctx(); const t0 = c.currentTime + delay;
+  const osc = c.createOscillator(); const gain = c.createGain();
+  osc.type = type; osc.frequency.setValueAtTime(freq, t0);
+  gain.gain.setValueAtTime(0, t0);
+  gain.gain.linearRampToValueAtTime(vol, t0+0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+  osc.connect(gain); gain.connect(c.destination);
+  osc.start(t0); osc.stop(t0+dur+0.02);
+}
+function sfxTap(){ tone(500,0.08,'square',0.12); }
+function sfxHigh(){ tone(760,0.12,'triangle',0.14); }
+function sfxLow(){ tone(340,0.12,'triangle',0.14); }
+function sfxWin(){ [523,659,784,1046].forEach((f,i)=>tone(f,0.22,'triangle',0.16,i*0.12)); }
+function sfxLose(){ [392,330,262].forEach((f,i)=>tone(f,0.28,'sine',0.14,i*0.15)); }
+
+/* ---------- game logic ---------- */
+const DIFFS = {
+  easy:   { label:'EASY',   min:1, max:30,  par:8 },
+  medium: { label:'MEDIUM', min:1, max:50,  par:7 },
+  hard:   { label:'HARD',   min:1, max:100, par:6 }
+};
+let currentDiff = DIFFS.medium;
+let MIN = 1, MAX = 50, PAR = 7;
+let secret = 0, attempts = 0, low = MIN, high = MAX, over = false;
+
+document.querySelectorAll('.diffBtn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    sfxTap();
+    currentDiff = DIFFS[btn.dataset.diff];
+    if(window.GG) window.GG.setMood(btn.dataset.diff);
+    document.getElementById('curDiff').textContent = 'DIFFICULTY: ' + currentDiff.label;
+    document.getElementById('diffBox').classList.add('hidden');
+    document.getElementById('playbox').classList.remove('hidden');
+    startGame();
+  });
+});
+
+function startGame(){
+  MIN = currentDiff.min; MAX = currentDiff.max; PAR = currentDiff.par;
+  secret = Math.floor(Math.random()*(MAX-MIN+1))+MIN;
+  attempts = 0; low = MIN; high = MAX; over = false;
+  document.getElementById('minShow').textContent = MIN;
+  document.getElementById('maxShow').textContent = MAX;
+  document.getElementById('minLabel').textContent = MIN;
+  document.getElementById('maxLabel').textContent = MAX;
+  document.getElementById('guessInput').min = MIN;
+  document.getElementById('guessInput').max = MAX;
+  document.getElementById('attemptCount').textContent = 0;
+  document.getElementById('parCount').textContent = PAR;
+  document.getElementById('parShow').textContent = PAR;
+  document.getElementById('hint').className = 'hint';
+  document.getElementById('hint').textContent = 'Type a number and hit guess.';
+  document.getElementById('history').innerHTML = '';
+  document.getElementById

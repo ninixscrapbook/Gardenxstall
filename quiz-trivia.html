@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Trivia · Game Garden</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#5A4038;
+    --ink-soft:#B0958D;
+    --paper:#FFFDF8;
+    --white:#ffffff;
+    --maroon:#F2899A;
+    --cream:#FFF6DE;
+    --dark:#F2899A;
+    --brown:#F5B96F;
+    --pink:#FFDCE3;
+    --good:#8FCB4E;
+    --bad:#F4867C;
+    --shadow: 0 10px 0 rgba(242,137,154,0.18);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 1px 1px, rgba(242,137,154,0.16) 1px, transparent 0) 0 0/26px 26px,
+      var(--paper);
+    font-family:'Nunito', sans-serif;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  a{ text-decoration:none; }
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:22px 6vw 0;
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    font-family:'Press Start 2P', monospace;
+    font-size:12px; color:var(--ink);
+  }
+  .brand-dot{ width:14px;height:14px;background:var(--maroon); border:2px solid var(--ink); box-shadow:3px 3px 0 rgba(46,10,10,0.25); }
+  .back{
+    font-family:'Press Start 2P', monospace; font-size:9px;
+    background:var(--white); border:2px solid var(--ink); border-radius:999px;
+    padding:8px 14px; color:var(--ink); box-shadow:2px 2px 0 rgba(46,10,10,0.18);
+  }
+  .sound-toggle{
+    font-family:'Press Start 2P', monospace; font-size:9px;
+    background:var(--cream); border:2px solid var(--ink); border-radius:999px;
+    padding:8px 14px; color:var(--ink); box-shadow:2px 2px 0 rgba(46,10,10,0.18);
+    cursor:pointer;
+  }
+  .topright{ display:flex; gap:10px; align-items:center; }
+
+  .hero{ padding:26px 6vw 6px; text-align:center; }
+  .hero-tag{
+    display:inline-block; font-family:'Press Start 2P', monospace; font-size:9px;
+    background:var(--pink); border:2px solid var(--ink); padding:6px 12px; border-radius:8px;
+    margin-bottom:12px; box-shadow:3px 3px 0 rgba(46,10,10,0.2);
+  }
+  .hero h1{
+    font-family:'Fredoka', sans-serif; font-weight:700;
+    font-size:clamp(30px, 6vw, 46px); margin:0; letter-spacing:.5px;
+  }
+  .hero h1 span{ color:var(--maroon); -webkit-text-stroke:1.2px var(--ink); text-shadow:3px 3px 0 var(--pink); }
+
+  .arena{
+    max-width:640px; margin: 22px auto 60px; padding:0 6vw;
+  }
+
+  .stage-card{
+    background:var(--white); border:3px solid var(--ink); border-radius:20px;
+    box-shadow:var(--shadow); overflow:hidden;
+  }
+  .awning{
+    height:30px;
+    background: repeating-linear-gradient(90deg, var(--maroon) 0 18px, var(--pink) 18px 36px);
+    border-bottom:3px solid var(--ink);
+  }
+  .stage{
+    display:flex; align-items:flex-end; justify-content:center; gap:24px;
+    background:var(--cream); padding:18px 10px 10px; position:relative;
+  }
+  .vs{
+    font-family:'Press Start 2P', monospace; font-size:10px; color:var(--ink);
+    background:var(--white); border:2px solid var(--ink); border-radius:50%;
+    width:26px; height:26px; display:flex; align-items:center; justify-content:center;
+    margin-bottom:16px;
+  }
+  .scoreboard{
+    display:flex; justify-content:space-between; padding:10px 22px 0;
+    font-family:'Press Start 2P', monospace; font-size:10px;
+  }
+  .score-you{ color:#D9506B; } .score-cpu{ color:#C77A2A; }
+
+  .char{ width:56px; height:64px; position:relative; filter:drop-shadow(2px 3px 0 rgba(46,10,10,0.25)); transition:transform .2s; }
+  .char .head{ position:absolute; left:50%; top:14px; transform:translateX(-50%); width:44px; height:40px; background:var(--fur,#E8C79A); border:2.5px solid var(--ink); border-radius:14px; }
+  .char .ear{ position:absolute; top:2px; width:16px; height:20px; background:var(--fur,#E8C79A); border:2.5px solid var(--ink); }
+  .char .ear.l{ left:2px; border-radius:60% 40% 0 40%; } .char .ear.r{ right:2px; border-radius:40% 60% 40% 0; }
+  .char .eye{ position:absolute; top:32px; width:5px; height:6px; background:var(--ink); border-radius:1px; }
+  .char .eye.l{ left:16px; } .char .eye.r{ right:16px; }
+  .char .blush{ position:absolute; top:40px; width:7px; height:4px; background:var(--pink); border-radius:50%; opacity:.8; }
+  .char .blush.l{ left:10px; } .char .blush.r{ right:10px; }
+  .char .muzzle{ position:absolute; left:50%; top:38px; transform:translateX(-50%); width:14px; height:9px; background:var(--fur-in,#F6E3C6); border-radius:0 0 8px 8px; border:2px solid var(--ink); border-top:none; }
+  .char .body{ position:absolute; left:50%; bottom:0; transform:translateX(-50%); width:34px; height:20px; background:var(--tunic,var(--pink)); border:2.5px solid var(--ink); border-radius:10px 10px 4px 4px; }
+  .bear{ --fur:#C9A27A; --fur-in:#F6E3C6; } .bear .ear{ border-radius:50%; width:16px; height:16px; }
+  .bunny{ --fur:#F7D8D3; --fur-in:#FBD9CE; } .bunny .ear{ height:30px; top:-8px; width:12px; border-radius:60%; }
+  .tunic-maroon{ --tunic:var(--maroon); } .tunic-brown{ --tunic:var(--brown); }
+  .char.happy{ animation: bounce .5s ease; } .char.sad{ animation: slump .5s ease; }
+  @keyframes bounce{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);} }
+  @keyframes slump{ 0%{transform:translateY(0) rotate(0);} 50%{transform:translateY(4px) rotate(-6deg);} 100%{transform:translateY(0) rotate(0);} }
+
+  .qbox{ padding:22px 26px 28px; }
+  .qcount{ font-family:'Press Start 2P', monospace; font-size:8px; color:var(--ink-soft); text-align:center; margin-bottom:8px; }
+  .question{ font-family:'Fredoka', sans-serif; font-size:21px; text-align:center; margin:0 0 18px; line-height:1.3; }
+  .options{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .opt{
+    font-family:'Nunito', sans-serif; font-weight:700; font-size:15px;
+    background:var(--paper); border:2.5px solid var(--ink); border-radius:12px;
+    padding:14px 12px; cursor:pointer; text-align:center; box-shadow:3px 3px 0 rgba(46,10,10,0.15);
+    transition:transform .12s ease;
+  }
+  .opt:hover{ transform:translateY(-3px); }
+  .opt:disabled{ cursor:default; }
+  .opt.correct{ background:var(--good); color:white; border-color:var(--ink); }
+  .opt.wrong{ background:var(--bad); color:white; border-color:var(--ink); }
+  .opt.dim{ opacity:.55; }
+
+  .feedback{ text-align:center; font-family:'Fredoka', sans-serif; font-size:16px; min-height:24px; margin-top:14px; color:var(--ink-soft); }
+  .next-wrap{ text-align:center; margin-top:14px; }
+  .btn{
+    font-family:'Press Start 2P', monospace; font-size:10px; color:var(--ink);
+    background:var(--maroon); border:2.5px solid var(--ink); border-radius:10px;
+    padding:12px 20px; cursor:pointer; box-shadow:3px 3px 0 rgba(46,10,10,0.3);
+  }
+  .btn:hover{ transform:translateY(-2px); }
+  .btn:active{ transform:translateY(0); }
+
+  .final{ text-align:center; padding:30px 20px; }
+  .final h2{ font-family:'Fredoka', sans-serif; font-size:28px; margin:0 0 8px; }
+  .final p{ color:var(--ink-soft); margin:0 0 18px; }
+  .hidden{ display:none !important; }
+
+  .diffBox{ padding:28px 26px 32px; text-align:center; }
+  .diffBox p{ color:var(--ink-soft); margin:0 0 18px; }
+  .diffRow{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+  .diffBtn{
+    font-family:'Press Start 2P', monospace; font-size:10px; color:var(--ink);
+    background:var(--paper); border:2.5px solid var(--ink); border-radius:12px;
+    padding:14px 18px; cursor:pointer; box-shadow:3px 3px 0 rgba(46,10,10,0.2);
+    transition:transform .12s ease;
+  }
+  .diffBtn:hover{ transform:translateY(-3px); }
+  .diffBtn small{ display:block; font-family:'Nunito',sans-serif; font-weight:700; font-size:10px; color:var(--ink-soft); margin-top:6px; }
+  .diffBtn.easy{ background:var(--cream); }
+  .diffBtn.medium{ background:var(--pink); }
+  .diffBtn.hard{ background:var(--maroon); color:var(--ink); }
+  .diffBtn.hard small{ color:#7A4A55; }
+  .cur-diff{ font-family:'Press Start 2P', monospace; font-size:8px; color:var(--ink-soft); text-align:center; margin-top:-4px; margin-bottom:10px; }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="back" href="index.html">◄ GARDEN</a>
+    <div class="brand"><span class="brand-dot"></span> STALL 07</div>
+    <div class="topright"></div>
+  </div>
+
+  <div class="hero">
+    <span class="hero-tag">★ BEAR VS BUNNY ★</span>
+    <h1>Quiz <span>Trivia</span></h1>
+  </div>
+
+  <div class="arena">
+    <div class="stage-card">
+      <div class="awning"></div>
+      <div class="stage">
+        <div class="char bear" id="charYou"><div class="ear l"></div><div class="ear r"></div><div class="head"></div><div class="eye l"></div><div class="eye r"></div><div class="muzzle"></div><div class="blush l"></div><div class="blush r"></div><div class="body tunic-maroon"></div></div>
+        <div class="vs">VS</div>
+        <div class="char bunny" id="charCpu"><div class="ear l"></div><div class="ear r"></div><div class="head"></div><div class="eye l"></div><div class="eye r"></div><div class="muzzle"></div><div class="blush l"></div><div class="blush r"></div><div class="body tunic-brown"></div></div>
+      </div>
+      <div class="scoreboard">
+        <div class="score-you">YOU: <span id="scoreYou">0</span></div>
+        <div class="score-cpu">BUNNY: <span id="scoreCpu">0</span></div>
+      </div>
+
+      <div class="diffBox" id="diffBox">
+        <p>Pick a difficulty — this sets how sharp Bunny's answers are.</p>
+        <div class="diffRow">
+          <button class="diffBtn easy" data-diff="easy">EASY<small>Bunny often wrong</small></button>
+          <button class="diffBtn medium" data-diff="medium">MEDIUM<small>Bunny's fairly sharp</small></button>
+          <button class="diffBtn hard" data-diff="hard">HARD<small>Bunny rarely misses</small></button>
+        </div>
+      </div>
+
+      <div class="qbox hidden" id="qbox">
+        <div class="cur-diff" id="curDiff"></div>
+        <div class="qcount" id="qcount">QUESTION 1 / 8</div>
+        <div class="question" id="question">Loading…</div>
+        <div class="options" id="options"></div>
+        <div class="feedback" id="feedback"></div>
+        <div class="next-wrap hidden" id="nextWrap"><button class="btn" id="nextBtn">NEXT ►</button></div>
+      </div>
+
+      <div class="final hidden" id="finalBox">
+        <h2 id="finalTitle">You win!</h2>
+        <p id="finalSub">Final score</p>
+        <button class="btn" id="restartBtn">PLAY AGAIN</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ---------- soft lofi ambient background music (inbuilt, no external file) ---------- */
+(function () {
+  const STORAGE_KEY = 'gg_sound';
+  let audioCtx = null;
+  let masterGain = null;
+  let soundOn = (localStorage.getItem(STORAGE_KEY) !== 'off');
+  let running = false;
+  let chordTimer = null;
+  let arpTimer = null;
+  let chordIdx = 0;
+  const listeners = [];
+
+  // Warm, dreamy lofi chord loop — Am7 / Fmaj7 / Cmaj7 / G6, low & soft.
+  const CHORDS = [
+    [220.00, 261.63, 329.63, 392.00],
+    [174.61, 220.00, 261.63, 349.23],
+    [130.81, 164.81, 196.00, 246.94],
+    [196.00, 246.94, 293.66, 349.23]
+  ];
+  const ARP_SCALE = [523.25, 587.33, 659.25, 783.99, 880.00, 987.77];
+  let chordDurMs = 5400; // one full chord's length; can be nudged by setMood()
+
+  function ctx() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      masterGain = audioCtx.createGain();
+      masterGain.gain.value = 0.0001;
+      masterGain.connect(audioCtx.destination);
+    }
+    return audioCtx;
+  }
+
+  function playPadNote(freq, startTime, durSec) {
+    const c = ctx();
+    const osc1 = c.createOscillator();
+    const osc2 = c.createOscillator();
+    osc1.type = 'sine';
+    osc2.type = 'triangle';
+    osc1.frequency.value = freq;
+    osc2.frequency.value = freq * 1.004; // gentle detune for warmth
+    const filter = c.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 1100;
+    const g = c.createGain();
+    const attack = Math.min(1.6, durSec * 0.3);
+    const release = Math.min(2.2, durSec * 0.35);
+    g.gain.setValueAtTime(0, startTime);
+    g.gain.linearRampToValueAtTime(0.05, startTime + attack);
+    g.gain.setValueAtTime(0.05, startTime + durSec - release);
+    g.gain.linearRampToValueAtTime(0, startTime + durSec);
+    osc1.connect(filter);
+    osc2.connect(filter);
+    filter.connect(g);
+    g.connect(masterGain);
+    osc1.start(startTime);
+    osc2.start(startTime);
+    osc1.stop(startTime + durSec + 0.1);
+    osc2.stop(startTime + durSec + 0.1);
+  }
+
+  function scheduleChord() {
+    if (!soundOn) return;
+    const c = ctx();
+    const chord = CHORDS[chordIdx % CHORDS.length];
+    const now = c.currentTime;
+    const durSec = (chordDurMs + 900) / 1000; // slight overlap for a smooth crossfade
+    chord.forEach(freq => playPadNote(freq, now, durSec));
+    chordIdx++;
+    chordTimer = setTimeout(scheduleChord, chordDurMs);
+  }
+
+  function playArpNote() {
+    if (!soundOn) return;
+    const c = ctx();
+    const freq = ARP_SCALE[Math.floor(Math.random() * ARP_SCALE.length)];
+    const t0 = c.currentTime;
+    const osc = c.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    const g = c.createGain();
+    g.gain.setValueAtTime(0, t0);
+    g.gain.linearRampToValueAtTime(0.03, t0 + 0.06);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.9);
+    osc.connect(g);
+    g.connect(masterGain);
+    osc.start(t0);
+    osc.stop(t0 + 2.0);
+  }
+
+  function scheduleArp() {
+    if (!soundOn) return;
+    if (Math.random() < 0.55) playArpNote(); // sparse sparkle, not constant
+    arpTimer = setTimeout(scheduleArp, 1500 + Math.random() * 2000);
+  }
+
+  function startMusic() {
+    if (running || !soundOn) return;
+    running = true;
+    const c = ctx();
+    if (c.state === 'suspended') c.resume();
+    masterGain.gain.cancelScheduledValues(c.currentTime);
+    masterGain.gain.setValueAtTime(masterGain.gain.value, c.currentTime);
+    masterGain.gain.linearRampToValueAtTime(1, c.currentTime + 1.5);
+    scheduleChord();
+    scheduleArp();
+  }
+
+  function stopMusic() {
+    running = false;
+    if (chordTimer) clearTimeout(chordTimer);
+    if (arpTimer) clearTimeout(arpTimer);
+    if (masterGain) {
+      const c = ctx();
+      masterGain.gain.cancelScheduledValues(c.currentTime);
+      masterGain.gain.setValueAtTime(masterGain.gain.value, c.currentTime);
+      masterGain.gain.linearRampToValueAtTime(0.0001, c.currentTime + 0.7);
+    }
+  }
+
+  function ensurePlaying() {
+    if (!soundOn) return;
+    const c = ctx();
+    if (c.state === 'suspended') c.resume();
+    if (!running) startMusic();
+  }
+
+  function setSoundOn(on) {
+    soundOn = on;
+    localStorage.setItem(STORAGE_KEY, soundOn ? 'on' : 'off');
+    if (soundOn) ensurePlaying(); else stopMusic();
+    listeners.forEach(cb => { try { cb(soundOn); } catch (e) {} });
+    updateButton();
+  }
+
+  // Lets an individual game gently vary the pace by difficulty, optional.
+  function setMood(level) {
+    if (level === 'easy') chordDurMs = 6400;
+    else if (level === 'hard') chordDurMs = 4200;
+    else chordDurMs = 5400;
+  }
+
+  let btnEl = null;
+  function updateButton() {
+    if (btnEl) btnEl.textContent = soundOn ? '\uD83D\uDD0A' : '\uD83D\uDD07';
+  }
+  function injectButton() {
+    btnEl = document.createElement('button');
+    btnEl.id = 'ggSpeakerBtn';
+    btnEl.type = 'button';
+    btnEl.setAttribute('aria-label', 'Toggle background music');
+    btnEl.style.cssText = [
+      'position:fixed', 'top:18px', 'right:18px', 'z-index:9999',
+      'width:44px', 'height:44px', 'border-radius:50%',
+      'background:#FFFDF8', 'border:2.5px solid #3B2A22',
+      'box-shadow:3px 3px 0 rgba(0,0,0,0.18)',
+      'display:flex', 'align-items:center', 'justify-content:center',
+      'font-size:18px', 'line-height:1', 'cursor:pointer', 'padding:0'
+    ].join(';');
+    updateButton();
+    btnEl.addEventListener('click', function (e) {
+      e.stopPropagation();
+      setSoundOn(!soundOn);
+    });
+    document.body.appendChild(btnEl);
+  }
+
+  function init() {
+    injectButton();
+    ensurePlaying(); // works immediately once the browser trusts this site enough to autoplay
+    document.addEventListener('click', ensurePlaying); // otherwise, the first tap anywhere starts it
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  window.GG = {
+    isSoundOn: () => soundOn,
+    setSoundOn,
+    setMood,
+    onToggle: (cb) => listeners.push(cb)
+  };
+})();
+</script>
+<script>
+/* ---------- click / result sound effects (separate from the ambient bgm.js music) ---------- */
+let audioCtx = null;
+function soundOn(){ return window.GG ? window.GG.isSoundOn() : true; }
+function ctx(){ if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); return audioCtx; }
+function tone(freq, dur, type='sine', vol=0.18, delay=0){
+  if(!soundOn()) return;
+  const c = ctx(); const t0 = c.currentTime + delay;
+  const osc = c.createOscillator(); const gain = c.createGain();
+  osc.type = type; osc.frequency.setValueAtTime(freq, t0);
+  gain.gain.setValueAtTime(0, t0);
+  gain.gain.linearRampToValueAtTime(vol, t0+0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+  osc.connect(gain); gain.connect(c.destination);
+  osc.start(t0); osc.stop(t0+dur+0.02);
+}
+function sfxClick(){ tone(520,0.09,'square',0.12); }
+function sfxCorrect(){ tone(660,0.12,'triangle',0.16); tone(880,0.16,'triangle',0.16,0.1); }
+function sfxWrong(){ tone(220,0.22,'sawtooth',0.14); }
+function sfxWin(){ [523,659,784,1046].forEach((f,i)=>tone(f,0.22,'triangle',0.16,i*0.12)); }
+function sfxLose(){ [392,330,262].forEach((f,i)=>tone(f,0.28,'sine',0.14,i*0.15)); }
+
+/* ---------- quiz data ---------- */
+const QUESTIONS = [
+  { q:"Which planet is known as the Red Planet?", opts:["Venus","Mars","Jupiter","Saturn"], a:1 },
+  { q:"How many legs does a spider have?", opts:["6","8","10","12"], a:1 },
+  { q:"What is the largest ocean on Earth?", opts:["Atlantic","Indian","Arctic","Pacific"], a:3 },
+  { q:"Which gas do plants absorb from the air?", opts:["Oxygen","Carbon dioxide","Nitrogen","Helium"], a:1 },
+  { q:"What do bees collect from flowers?", opts:["Sap","Nectar","Dew","Pollen only"], a:1 },
+  { q:"How many strings does a standard guitar have?", opts:["4","5","6","7"], a:2 },
+  { q:"Which season comes right after spring?", opts:["Winter","Summer","Autumn","Fall"], a:1 },
+  { q:"What shape has three sides?", opts:["Square","Hexagon","Triangle","Pentagon"], a:2 },
+  { q:"Which instrument has black and white keys?", opts:["Violin","Piano","Flute","Drum"], a:1 },
+  { q:"How many days are in a leap year?", opts:["364","365","366","367"], a:2 }
+];
+
+const DIFFS = {
+  easy:   { label:'EASY',   count:6,  acc:0.35 },
+  medium: { label:'MEDIUM', count:8,  acc:0.65 },
+  hard:   { label:'HARD',   count:10, acc:0.85 }
+};
+let currentDiff = DIFFS.medium;
+
+let order = [];
+let idx = 0;
+let scoreYou = 0, scoreCpu = 0;
+let answered = false;
+
+function shuffle(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+document.querySelectorAll('.diffBtn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    sfxClick();
+    currentDiff = DIFFS[btn.dataset.diff];
+    if(window.GG) window.GG.setMood(btn.dataset.diff);
+    document.getElementById('curDiff').textContent = 'DIFFICULTY: ' + currentDiff.label;
+    document.getElementById('diffBox').classList.add('hidden');
+    document.getElementById('qbox').classList.remove('hidden');
+    startGame();
+  });
+});
+
+function startGame(){
+  order = shuffle(QUESTIONS.map((_,i)=>i)).slice(0, currentDiff.count);
+  idx = 0; scoreYou = 0; scoreCpu = 0;
+  document.getEl

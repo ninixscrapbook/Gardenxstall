@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2048 · Game Garden</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --deep:#9B6FBF;
+    --light:#D8C2EC;
+    --accent:#B98ED1;
+    --accent-pale:#F0E3F7;
+    --cream:#F7F1FA;
+    --pop:#7E56A6;
+    --paper:#FDFBFF;
+    --ink:#4A335C;
+    --ink-soft:#8F7A9E;
+    --white:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 1px 1px, rgba(155,111,191,0.16) 1px, transparent 0) 0 0/26px 26px,
+      var(--paper);
+    font-family:'Nunito', sans-serif;
+    color:var(--ink);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    -webkit-user-select:none; user-select:none;
+  }
+
+  .topbar{ width:100%; display:flex; align-items:center; justify-content:space-between; padding:20px 6vw 0; max-width:640px; }
+  .back{ font-family:'Press Start 2P', monospace; font-size:9px; text-decoration:none; color:var(--ink); background:var(--white); border:2px solid var(--ink); padding:9px 12px; border-radius:8px; box-shadow:2px 2px 0 rgba(74,51,92,0.2); }
+  .brand{ font-family:'Press Start 2P', monospace; font-size:11px; display:flex; align-items:center; gap:8px; }
+  .brand-dot{ width:12px;height:12px;background:var(--pop); border:2px solid var(--ink); }
+  .sound-btn{ font-size:16px; background:var(--white); border:2px solid var(--ink); border-radius:10px; width:38px; height:38px; cursor:pointer; box-shadow:2px 2px 0 rgba(74,51,92,0.2); }
+  .sound-btn.muted{ opacity:.55; }
+
+  .hero{ text-align:center; padding:20px 6vw 4px; }
+  .hero-tag{ display:inline-block; font-family:'Press Start 2P', monospace; font-size:9px; background:var(--light); border:2px solid var(--ink); padding:6px 12px; border-radius:8px; margin-bottom:10px; box-shadow:3px 3px 0 rgba(74,51,92,0.2); }
+  .hero h1{ font-family:'Fredoka', sans-serif; font-weight:700; font-size:clamp(26px, 6vw, 40px); margin:0; }
+  .hero h1 span{ color:var(--pop); -webkit-text-stroke:1px var(--ink); text-shadow:2px 2px 0 var(--light); }
+
+  .difficulty{ display:flex; flex-direction:column; align-items:center; gap:6px; margin-top:8px; }
+  .difficulty-label{ font-family:'Press Start 2P', monospace; font-size:9px; color:var(--ink-soft); letter-spacing:1px; }
+  .diff-options{ display:flex; gap:8px; background:var(--white); border:2.5px solid var(--ink); border-radius:12px; padding:5px; box-shadow:3px 3px 0 rgba(74,51,92,0.15); }
+  .diff-btn{ font-family:'Fredoka', sans-serif; font-weight:600; font-size:13px; border:none; background:transparent; color:var(--ink-soft); padding:8px 16px; border-radius:8px; cursor:pointer; }
+  .diff-btn:hover{ background:var(--accent-pale); }
+  .diff-btn.active{ background:var(--deep); color:var(--paper); }
+
+  .status{ font-family:'Fredoka', sans-serif; font-size:15px; color:var(--ink-soft); margin:12px 0 6px; min-height:20px; text-align:center; }
+
+  .arena{ display:flex; gap:18px; flex-wrap:wrap; justify-content:center; padding:0 4vw; }
+  .side{ display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .side-label{ display:flex; align-items:center; gap:8px; font-family:'Fredoka', sans-serif; font-weight:600; font-size:14px; }
+  .side-score{ font-family:'Press Start 2P', monospace; font-size:12px; color:var(--pop); background:var(--white); border:2px solid var(--ink); border-radius:8px; padding:4px 8px; }
+
+  .grid2048{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    grid-template-rows:repeat(4, 1fr);
+    gap:7px;
+    width:min(40vw, 220px);
+    height:min(40vw, 220px);
+    background:var(--light);
+    border:3px solid var(--ink);
+    border-radius:14px;
+    padding:7px;
+    box-shadow:0 8px 0 rgba(74,51,92,0.15);
+  }
+  .tile{
+    background:var(--cream);
+    border-radius:8px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Fredoka', sans-serif;
+    font-weight:700;
+    font-size:clamp(11px, 3.4vw, 16px);
+    color:var(--ink);
+    transition:background .12s ease;
+  }
+  .tile[data-v="2"]{ background:#F0E3F7; }
+  .tile[data-v="4"]{ background:#E4CDF0; }
+  .tile[data-v="8"]{ background:#D8B4E8; color:var(--paper); }
+  .tile[data-v="16"]{ background:#C89AE0; color:var(--paper); }
+  .tile[data-v="32"]{ background:#B87FD8; color:var(--paper); }
+  .tile[data-v="64"]{ background:#A566CC; color:var(--paper); }
+  .tile[data-v="128"]{ background:#8F52B8; color:var(--paper); font-size:13px; }
+  .tile[data-v="256"]{ background:#7A3FA3; color:var(--paper); font-size:13px; }
+  .tile[data-v="512"]{ background:#652E8E; color:var(--paper); font-size:12px; }
+  .tile[data-v="1024"]{ background:#511F79; color:var(--paper); font-size:11px; }
+  .tile[data-v="2048"]{ background:#3D1264; color:#FCE8E7; font-size:11px; }
+
+  .dpad{ display:grid; grid-template-columns:repeat(3, 44px); grid-template-rows:repeat(3, 44px); gap:6px; margin:14px 0 8px; }
+  .dpad button{ font-size:16px; border:2px solid var(--ink); background:var(--white); border-radius:10px; box-shadow:2px 2px 0 rgba(74,51,92,0.2); cursor:pointer; }
+  .dpad button:active{ background:var(--accent-pale); }
+  .dpad .up{ grid-column:2; grid-row:1; }
+  .dpad .left{ grid-column:1; grid-row:2; }
+  .dpad .right{ grid-column:3; grid-row:2; }
+  .dpad .down{ grid-column:2; grid-row:3; }
+
+  .controls{ display:flex; gap:12px; margin:6px 0 40px; }
+  .btn{ font-family:'Press Start 2P', monospace; font-size:10px; border:2px solid var(--ink); border-radius:10px; padding:11px 16px; cursor:pointer; background:var(--white); box-shadow:3px 3px 0 rgba(74,51,92,0.2); color:var(--ink); }
+  .btn.primary{ background:var(--deep); color:var(--paper); }
+
+  .result-overlay{ position:fixed; inset:0; background:rgba(74,51,92,0.35); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:10; padding:20px; }
+  .result-overlay.show{ opacity:1; pointer-events:auto; }
+  .result-card{ background:var(--white); border:3px solid var(--ink); border-radius:22px; box-shadow:0 12px 0 rgba(74,51,92,0.25); padding:30px 34px; text-align:center; max-width:320px; transform:scale(.8); transition:transform .2s cubic-bezier(.34,1.56,.64,1); }
+  .result-overlay.show .result-card{ transform:scale(1); }
+  .result-emoji{ font-size:44px; margin-bottom:6px; }
+  .result-title{ font-family:'Fredoka', sans-serif; font-weight:700; font-size:21px; margin-bottom:16px; }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="back" href="game-garden-homepage.html">◄ GARDEN</a>
+    <div class="brand"><span class="brand-dot"></span>STALL 04</div>
+    <button class="sound-btn muted" id="soundBtn" title="Toggle music">🔈</button>
+  </div>
+
+  <div class="hero">
+    <span class="hero-tag">★ BEAR VS CHICK ★</span>
+    <h1>Merge to the <span>Golden</span> Tile</h1>
+  </div>
+
+  <div class="difficulty">
+    <span class="difficulty-label">DIFFICULTY</span>
+    <div class="diff-options">
+      <button class="diff-btn" data-level="easy">Easy</button>
+      <button class="diff-btn active" data-level="medium">Medium</button>
+      <button class="diff-btn" data-level="hard">Hard</button>
+    </div>
+  </div>
+
+  <div class="status" id="status">Swipe or use the pad — race Chick to 2048!</div>
+
+  <div class="arena">
+    <div class="side">
+      <div class="side-label">🐻 Bear (You)</div>
+      <div class="side-score" id="score-bear">0</div>
+      <div class="grid2048" id="board-bear"></div>
+    </div>
+    <div class="side">
+      <div class="side-label">🐤 Chick</div>
+      <div class="side-score" id="score-chick">0</div>
+      <div class="grid2048" id="board-chick"></div>
+    </div>
+  </div>
+
+  <div class="dpad">
+    <button class="up" id="btn-up">▲</button>
+    <button class="left" id="btn-left">◄</button>
+    <button class="right" id="btn-right">►</button>
+    <button class="down" id="btn-down">▼</button>
+  </div>
+
+  <div class="controls">
+    <button class="btn primary" id="restart">↻ NEW ROUND</button>
+  </div>
+
+  <div class="result-overlay" id="resultOverlay">
+    <div class="result-card">
+      <div class="result-emoji" id="resultEmoji">🎉</div>
+      <div class="result-title" id="resultTitle">Bear wins!</div>
+      <button class="btn primary" id="playAgainBtn">↻ PLAY AGAIN</button>
+    </div>
+  </div>
+
+<script>
+  const N = 4;
+  const TARGET = 2048;
+  const boardBearEl = document.getElementById('board-bear');
+  const boardChickEl = document.getElementById('board-chick');
+  const scoreBearEl = document.getElementById('score-bear');
+  const scoreChickEl = document.getElementById('score-chick');
+  const statusEl = document.getElementById('status');
+  const resultOverlay = document.getElementById('resultOverlay');
+  const resultEmoji = document.getElementById('resultEmoji');
+  const resultTitle = document.getElementById('resultTitle');
+
+  let difficulty = 'medium';
+  let bearGrid, chickGrid, gameOver, aiTimer;
+
+  const diffButtons = document.querySelectorAll('.diff-btn');
+  diffButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      diffButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      difficulty = btn.dataset.level;
+      newRound();
+    });
+  });
+
+  /* ---------- audio ---------- */
+  let audioCtx = null, musicOn = false, musicTimer = null, noteIndex = 0;
+  const MELODY = [392.00, 466.16, 587.33, 466.16, 440.00, 587.33, 659.25, 587.33];
+  function ensureAudio(){ if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
+  function playTone(freq, duration, type, gainVal){
+    if (!audioCtx) return;
+    const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+    osc.type = type || 'square'; osc.frequency.value = freq;
+    gain.gain.setValueAtTime(gainVal || 0.05, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + duration);
+  }
+  function musicStep(){
+    if (!musicOn) return;
+    const freq = MELODY[noteIndex % MELODY.length];
+    playTone(freq, 0.22, 'triangle', 0.035);
+    noteIndex++;
+    musicTimer = setTimeout(musicStep, 280);
+  }
+  function startMusic(){ ensureAudio(); musicOn = true; noteIndex = 0; musicStep(); soundBtn.textContent = '🔊'; soundBtn.classList.remove('muted'); }
+  function stopMusic(){ musicOn = false; clearTimeout(musicTimer); soundBtn.textContent = '🔈'; soundBtn.classList.add('muted'); }
+  const soundBtn = document.getElementById('soundBtn');
+  soundBtn.addEventListener('click', () => { ensureAudio(); if (musicOn) stopMusic(); else startMusic(); });
+  function sfxMerge(){ ensureAudio(); playTone(660, 0.1, 'square', 0.05); }
+  function sfxWin(){ ensureAudio(); [523.25,659.25,783.99,1046.5].forEach((f,i)=>setTimeout(()=>playTone(f,0.25,'square',0.07), i*110)); }
+  function sfxDraw(){ ensureAudio(); [392,349.23].forEach((f,i)=>setTimeout(()=>playTone(f,0.3,'triangle',0.06), i*150)); }
+  /* --------------------------- */
+
+  function emptyGrid(){ return Array.from({length:N}, () => Array(N).fill(0)); }
+
+  function addRandomTile(grid){
+    const empties = [];
+    for (let r=0;r<N;r++) for (let c=0;c<N;c++) if (grid[r][c]===0) empties.push([r,c]);
+    if (!empties.length) return;
+    const [r,c] = empties[Math.floor(Math.random()*empties.length)];
+    grid[r][c] = Math.random() < 0.9 ? 2 : 4;
+  }
+
+  function cloneGrid(g){ return g.map(row => row.slice()); }
+  function gridsEqual(a,b){ return a.every((row,r) => row.every((v,c) => v === b[r][c])); }
+
+  // slide+merge a single row to the left; returns {row, gained}
+  function slideRowLeft(row){
+    const vals = row.filter(v => v !== 0);
+    let gained = 0;
+    for (let i=0;i<vals.length-1;i++){
+      if (vals[i] === vals[i+1]){
+        vals[i] *= 2;
+        gained += vals[i];
+        vals.splice(i+1,1);
+      }
+    }
+    while (vals.length < N) vals.push(0);
+    return { row: vals, gained };
+  }
+
+  function rotateGrid(grid){
+    // rotate clockwise
+    const out = emptyGrid();
+    for (let r=0;r<N;r++) for (let c=0;c<N;c++) out[c][N-1-r] = grid[r][c];
+    return out;
+  }
+
+  function move(grid, dir){
+    // normalize to "left" by rotating, then rotate back
+    let g = cloneGrid(grid);
+    let rotations = { left:0, up:3, right:2, down:1 }[dir];
+    for (let i=0;i<rotations;i++) g = rotateGrid(g);
+    let gained = 0;
+    for (let r=0;r<N;r++){
+      const res = slideRowLeft(g[r]);
+      g[r] = res.row;
+      gained += res.gained;
+    }
+    for (let i=0;i<(4-rotations)%4;i++) g = rotateGrid(g);
+    return { grid: g, gained };
+  }
+
+  function hasMoves(grid){
+    for (let r=0;r<N;r++) for (let c=0;c<N;c++){
+      if (grid[r][c] === 0) return true;
+      if (c<N-1 && grid[r][c] === grid[r][c+1]) return true;
+      if (r<N-1 && grid[r][c] === grid[r+1][c]) return true;
+    }
+    return false;
+  }
+
+  function maxTile(grid){
+    let m = 0;
+    grid.forEach(row => row.forEach(v => { if (v > m) m = v; }));
+    return m;
+  }
+
+  function renderGrid(el, grid){
+    el.innerHTML = '';
+    grid.forEach(row => row.forEach(v => {
+      const t = document.createElement('div');
+      t.className = 'tile';
+      if (v){ t.dataset.v = v; t.textContent = v; }
+      el.appendChild(t);
+    }));
+  }
+
+  let bearScore = 0, chickScore = 0;
+
+  function newRound(){
+    gameOver = false;
+    hideResult();
+    bearGrid = emptyGrid();
+    chickGrid = emptyGrid();
+    addRandomTile(bearGrid); addRandomTile(bearGrid);
+    addRandomTile(chickGrid); addRandomTile(chickGrid);
+    bearScore = 0; chickScore = 0;
+    scoreBearEl.textContent = 0;
+    scoreChickEl.textContent = 0;
+    statusEl.textContent = "Swipe or use the pad — race Chick to 2048!";
+    renderGrid(boardBearEl, bearGrid);
+    renderGrid(boardChickEl, chickGrid);
+    clearInterval(aiTimer);
+    const speed = difficulty === 'easy' ? 2200 : difficulty === 'hard' ? 1400 : 1800;
+    aiTimer = setInterval(aiMove, speed);
+  }
+
+  function playerMove(dir){
+    if (gameOver) return;
+    const { grid, gained } = move(bearGrid, dir);
+    if (gridsEqual(grid, bearGrid)) return; // no-op move
+    bearGrid = grid;
+    if (gained){ bearScore += gained; sfxMerge(); }
+    addRandomTile(bearGrid);
+    scoreBearEl.textContent = bearScore;
+    renderGrid(boardBearEl, bearGrid);
+    checkEnd();
+  }
+
+  function aiMove(){
+    if (gameOver) return;
+    const dirs = ['left','up','right','down'];
+    const smartness = difficulty === 'easy' ? 0.3 : difficulty === 'hard' ? 0.95 : 0.6;
+    let order = dirs;
+    if (Math.random() < smartness){
+      // prefer the move that gains the most / keeps board most full toward a corner strategy
+      let best = null, bestGain = -1;
+      for (const d of dirs){
+        const { grid, gained } = move(chickGrid, d);
+        if (gridsEqual(grid, chickGrid)) continue;
+        if (gained > bestGain){ bestGain = gained; best = d; }
+      }
+      if (best) order = [best, ...dirs.filter(d => d !== best)];
+    } else {
+      order = [...dirs].sort(() => Math.random() - 0.5);
+    }
+    for (const d of order){
+      const { grid, gained } = move(chickGrid, d);
+      if (gridsEqual(grid, chickGrid)) continue;
+      chickGrid = grid;
+      if (gained){ chickScore += gained; }
+      addRandomTile(chickGrid);
+      scoreChickEl.textContent = chickScore;
+      renderGrid(boardChickEl, chickGrid);
+      break;
+    }
+    checkEnd();
+  }
+
+  function checkEnd(){
+    const bearMax = maxTile(bearGrid);
+    const chickMax = maxTile(chickGrid);
+    if (bearMax >= TARGET || chickMax >= TARGET){
+      return finish(bearMax >= TARGET && chickMax >= TARGET ? 'draw' : (bearMax >= TARGET ? 'bear' : 'chick'), true);
+    }
+    const bearStuck = !hasMoves(bearGrid);
+    const chickStuck = !hasMoves(chickGrid);
+    if (bearStuck && chickStuck){
+      if (bearMax === chickMax) return finish('draw', false);
+      return finish(bearMax > chickMax ? 'bear' : 'chick', false);
+    }
+  }
+
+  function showResult(emoji, title){ resultEmoji.textContent = emoji; resultTitle.textContent = title; resultOverlay.classList.add('show'); }
+  function hideResult(){ resultOverlay.classList.remove('show'); }
+
+  function finish(winner, reachedTarget){
+    gameOver = true;
+    clearInterval(aiTimer);
+    if (winner === 'draw'){
+      statusEl.textContent = "Both boards stalled evenly — a draw!";
+      showResult('🤝', "It's a draw!"); sfxDraw();
+    } else if (winner === 'bear'){
+      statusEl.textContent = reachedTarget ? "🐻 Bear reached 2048 first!" : "🐻 Bear had the higher tile!";
+      showResult('🎉', '🐻 Bear wins!'); sfxWin();
+    } else {
+      statusEl.textContent = reachedTarget ? "🐤 Chick reached 2048 first!" : "🐤 Chick had the higher tile!";
+      showResult('🐣', '🐤 Chick wins!'); sfxWin();
+    }
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowUp' || e.key === 'w') playerMove('up');
+    else if (e.key === 'ArrowDown' || e.key === 's') playerMove('down');
+    else if (e.key === 'ArrowLeft' || e.key === 'a') playerMove('left');
+    else if (e.key === 'ArrowRight' || e.key === 'd') playerMove('right');
+  });
+  document.getElementById('btn-up').addEventListener('click', () => playerMove('up'));
+  document.getElementById('btn-down').addEventListener('click', () => playerMove('down'));
+  document.getElementById('btn-left').addEventListener('click', () => playerMove('left'));
+  document.getElementById('btn-right').addEventListener('click', () => playerMove('right'));
+
+  // basic swipe support on the bear board
+  let touchStartX=0, touchStartY=0;
+  boardBearEl.addEventListener('touchstart', e => {
+    touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY;
+  }, {passive:true});
+  boardBearEl.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
+    if (Math.abs(dx) > Math.abs(dy)) playerMove(dx > 0 ? 'right' : 'left');
+    else playerMove(dy > 0 ? 'down' : 'up');
+  }, {passive:true});
+
+  document.getElementById('restart').addEventListener('click', newRound);
+  document.getElementById('playAgainBtn').addEventListener('click', newRound);
+
+  newRound();
+</script>
+
+</body>
+</html>
