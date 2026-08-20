@@ -73,6 +73,27 @@
     max-width:640px; margin: 22px auto 60px; padding:0 6vw;
   }
 
+  /* Difficulty picker now lives ABOVE the game stage, as its own card */
+  .diffCard{
+    background:var(--white); border:3px solid var(--ink); border-radius:20px;
+    box-shadow:var(--shadow); padding:24px 26px; text-align:center; margin-bottom:20px;
+  }
+  .diffCard p{ color:var(--ink-soft); margin:0 0 18px; }
+  .diffRow{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+  .diffBtn{
+    font-family:'Press Start 2P', monospace; font-size:10px; color:var(--ink);
+    background:var(--paper); border:2.5px solid var(--ink); border-radius:12px;
+    padding:14px 18px; cursor:pointer; box-shadow:3px 3px 0 rgba(46,10,10,0.2);
+    transition:transform .12s ease;
+  }
+  .diffBtn:hover{ transform:translateY(-3px); }
+  .diffBtn small{ display:block; font-family:'Nunito',sans-serif; font-weight:700; font-size:10px; color:var(--ink-soft); margin-top:6px; }
+  .diffBtn.easy{ background:var(--cream); }
+  .diffBtn.medium{ background:var(--pink); }
+  .diffBtn.hard{ background:var(--maroon); color:var(--ink); }
+  .diffBtn.hard small{ color:#7A4A55; }
+  .cur-diff{ font-family:'Press Start 2P', monospace; font-size:8px; color:var(--ink-soft); text-align:center; margin-top:-4px; margin-bottom:10px; }
+
   .stage-card{
     background:var(--white); border:3px solid var(--ink); border-radius:20px;
     box-shadow:var(--shadow); overflow:hidden;
@@ -145,23 +166,6 @@
   .final h2{ font-family:'Fredoka', sans-serif; font-size:28px; margin:0 0 8px; }
   .final p{ color:var(--ink-soft); margin:0 0 18px; }
   .hidden{ display:none !important; }
-
-  .diffBox{ padding:28px 26px 32px; text-align:center; }
-  .diffBox p{ color:var(--ink-soft); margin:0 0 18px; }
-  .diffRow{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
-  .diffBtn{
-    font-family:'Press Start 2P', monospace; font-size:10px; color:var(--ink);
-    background:var(--paper); border:2.5px solid var(--ink); border-radius:12px;
-    padding:14px 18px; cursor:pointer; box-shadow:3px 3px 0 rgba(46,10,10,0.2);
-    transition:transform .12s ease;
-  }
-  .diffBtn:hover{ transform:translateY(-3px); }
-  .diffBtn small{ display:block; font-family:'Nunito',sans-serif; font-weight:700; font-size:10px; color:var(--ink-soft); margin-top:6px; }
-  .diffBtn.easy{ background:var(--cream); }
-  .diffBtn.medium{ background:var(--pink); }
-  .diffBtn.hard{ background:var(--maroon); color:var(--ink); }
-  .diffBtn.hard small{ color:#7A4A55; }
-  .cur-diff{ font-family:'Press Start 2P', monospace; font-size:8px; color:var(--ink-soft); text-align:center; margin-top:-4px; margin-bottom:10px; }
 </style>
 </head>
 <body>
@@ -178,6 +182,18 @@
   </div>
 
   <div class="arena">
+
+    <!-- Difficulty picker: now its own card, ABOVE the game stage -->
+    <div class="diffCard" id="diffBox">
+      <p>Pick a difficulty — this sets how sharp Bunny's answers are.</p>
+      <div class="diffRow">
+        <button class="diffBtn easy" data-diff="easy">EASY<small>Bunny often wrong</small></button>
+        <button class="diffBtn medium" data-diff="medium">MEDIUM<small>Bunny's fairly sharp</small></button>
+        <button class="diffBtn hard" data-diff="hard">HARD<small>Bunny rarely misses</small></button>
+      </div>
+    </div>
+    <div class="cur-diff" id="curDiff"></div>
+
     <div class="stage-card">
       <div class="awning"></div>
       <div class="stage">
@@ -190,17 +206,7 @@
         <div class="score-cpu">BUNNY: <span id="scoreCpu">0</span></div>
       </div>
 
-      <div class="diffBox" id="diffBox">
-        <p>Pick a difficulty — this sets how sharp Bunny's answers are.</p>
-        <div class="diffRow">
-          <button class="diffBtn easy" data-diff="easy">EASY<small>Bunny often wrong</small></button>
-          <button class="diffBtn medium" data-diff="medium">MEDIUM<small>Bunny's fairly sharp</small></button>
-          <button class="diffBtn hard" data-diff="hard">HARD<small>Bunny rarely misses</small></button>
-        </div>
-      </div>
-
       <div class="qbox hidden" id="qbox">
-        <div class="cur-diff" id="curDiff"></div>
         <div class="qcount" id="qcount">QUESTION 1 / 8</div>
         <div class="question" id="question">Loading…</div>
         <div class="options" id="options"></div>
@@ -229,7 +235,6 @@
   let chordIdx = 0;
   const listeners = [];
 
-  // Warm, dreamy lofi chord loop — Am7 / Fmaj7 / Cmaj7 / G6, low & soft.
   const CHORDS = [
     [220.00, 261.63, 329.63, 392.00],
     [174.61, 220.00, 261.63, 349.23],
@@ -237,7 +242,7 @@
     [196.00, 246.94, 293.66, 349.23]
   ];
   const ARP_SCALE = [523.25, 587.33, 659.25, 783.99, 880.00, 987.77];
-  let chordDurMs = 5400; // one full chord's length; can be nudged by setMood()
+  let chordDurMs = 5400;
 
   function ctx() {
     if (!audioCtx) {
@@ -256,7 +261,7 @@
     osc1.type = 'sine';
     osc2.type = 'triangle';
     osc1.frequency.value = freq;
-    osc2.frequency.value = freq * 1.004; // gentle detune for warmth
+    osc2.frequency.value = freq * 1.004;
     const filter = c.createBiquadFilter();
     filter.type = 'lowpass';
     filter.frequency.value = 1100;
@@ -282,7 +287,7 @@
     const c = ctx();
     const chord = CHORDS[chordIdx % CHORDS.length];
     const now = c.currentTime;
-    const durSec = (chordDurMs + 900) / 1000; // slight overlap for a smooth crossfade
+    const durSec = (chordDurMs + 900) / 1000;
     chord.forEach(freq => playPadNote(freq, now, durSec));
     chordIdx++;
     chordTimer = setTimeout(scheduleChord, chordDurMs);
@@ -308,7 +313,7 @@
 
   function scheduleArp() {
     if (!soundOn) return;
-    if (Math.random() < 0.55) playArpNote(); // sparse sparkle, not constant
+    if (Math.random() < 0.55) playArpNote();
     arpTimer = setTimeout(scheduleArp, 1500 + Math.random() * 2000);
   }
 
@@ -351,7 +356,6 @@
     updateButton();
   }
 
-  // Lets an individual game gently vary the pace by difficulty, optional.
   function setMood(level) {
     if (level === 'easy') chordDurMs = 6400;
     else if (level === 'hard') chordDurMs = 4200;
@@ -385,8 +389,8 @@
 
   function init() {
     injectButton();
-    ensurePlaying(); // works immediately once the browser trusts this site enough to autoplay
-    document.addEventListener('click', ensurePlaying); // otherwise, the first tap anywhere starts it
+    ensurePlaying();
+    document.addEventListener('click', ensurePlaying);
   }
 
   if (document.readyState === 'loading') {
@@ -404,7 +408,7 @@
 })();
 </script>
 <script>
-/* ---------- click / result sound effects (separate from the ambient bgm.js music) ---------- */
+/* ---------- click / result sound effects ---------- */
 let audioCtx = null;
 function soundOn(){ return window.GG ? window.GG.isSoundOn() : true; }
 function ctx(){ if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); return audioCtx; }
@@ -468,4 +472,113 @@ document.querySelectorAll('.diffBtn').forEach(btn=>{
 function startGame(){
   order = shuffle(QUESTIONS.map((_,i)=>i)).slice(0, currentDiff.count);
   idx = 0; scoreYou = 0; scoreCpu = 0;
-  document.getEl
+  document.getElementById('scoreYou').textContent = '0';
+  document.getElementById('scoreCpu').textContent = '0';
+  document.getElementById('finalBox').classList.add('hidden');
+  document.getElementById('qbox').classList.remove('hidden');
+  showQuestion();
+}
+
+function showQuestion(){
+  answered = false;
+  const qi = order[idx];
+  const item = QUESTIONS[qi];
+  document.getElementById('qcount').textContent = 'QUESTION ' + (idx+1) + ' / ' + order.length;
+  document.getElementById('question').textContent = item.q;
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('nextWrap').classList.add('hidden');
+
+  const optWrap = document.getElementById('options');
+  optWrap.innerHTML = '';
+  const shuffledOpts = item.opts.map((text, origIdx) => ({text, origIdx}));
+  shuffle(shuffledOpts).forEach(o => {
+    const b = document.createElement('button');
+    b.className = 'opt';
+    b.textContent = o.text;
+    b.addEventListener('click', ()=> handleAnswer(o.origIdx === item.a, b, item));
+    optWrap.appendChild(b);
+  });
+}
+
+function handleAnswer(isCorrect, btnEl, item){
+  if(answered) return;
+  answered = true;
+  sfxClick();
+
+  const cpuCorrect = Math.random() < currentDiff.acc;
+
+  document.querySelectorAll('.opt').forEach(b=>{
+    b.disabled = true;
+    if(b.textContent === item.opts[item.a]) b.classList.add('correct');
+    else b.classList.add('dim');
+  });
+
+  let msg = '';
+  if(isCorrect){
+    btnEl.classList.remove('dim'); btnEl.classList.add('correct');
+    scoreYou++;
+    document.getElementById('scoreYou').textContent = scoreYou;
+    document.getElementById('charYou').classList.add('happy');
+    setTimeout(()=>document.getElementById('charYou').classList.remove('happy'), 500);
+    sfxCorrect();
+    msg = 'You got it! ';
+  } else {
+    btnEl.classList.remove('dim'); btnEl.classList.add('wrong');
+    document.getElementById('charYou').classList.add('sad');
+    setTimeout(()=>document.getElementById('charYou').classList.remove('sad'), 500);
+    sfxWrong();
+    msg = 'Not quite. ';
+  }
+
+  if(cpuCorrect){
+    scoreCpu++;
+    document.getElementById('scoreCpu').textContent = scoreCpu;
+    document.getElementById('charCpu').classList.add('happy');
+    setTimeout(()=>document.getElementById('charCpu').classList.remove('happy'), 500);
+    msg += 'Bunny answered correctly too.';
+  } else {
+    document.getElementById('charCpu').classList.add('sad');
+    setTimeout(()=>document.getElementById('charCpu').classList.remove('sad'), 500);
+    msg += 'Bunny missed that one!';
+  }
+
+  document.getElementById('feedback').textContent = msg;
+  document.getElementById('nextWrap').classList.remove('hidden');
+}
+
+document.getElementById('nextBtn').addEventListener('click', ()=>{
+  sfxClick();
+  idx++;
+  if(idx >= order.length){
+    endGame();
+  } else {
+    showQuestion();
+  }
+});
+
+function endGame(){
+  document.getElementById('qbox').classList.add('hidden');
+  document.getElementById('finalBox').classList.remove('hidden');
+  const finalTitle = document.getElementById('finalTitle');
+  const finalSub = document.getElementById('finalSub');
+  if(scoreYou > scoreCpu){
+    finalTitle.textContent = 'You win!';
+    sfxWin();
+  } else if(scoreCpu > scoreYou){
+    finalTitle.textContent = 'Bunny wins!';
+    sfxLose();
+  } else {
+    finalTitle.textContent = "It's a tie!";
+  }
+  finalSub.textContent = 'You: ' + scoreYou + '  ·  Bunny: ' + scoreCpu + '  (out of ' + order.length + ')';
+}
+
+document.getElementById('restartBtn').addEventListener('click', ()=>{
+  sfxClick();
+  document.getElementById('finalBox').classList.add('hidden');
+  document.getElementById('qbox').classList.add('hidden');
+  document.getElementById('diffBox').classList.remove('hidden');
+});
+</script>
+</body>
+</html>
